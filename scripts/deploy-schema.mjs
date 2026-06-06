@@ -55,7 +55,7 @@ try {
   const schema = await fs.readFile(schemaPath, "utf8");
 
   await connection.query(schema);
-  console.log(`Schema deployed to ${process.env.DB_HOST}/${process.env.DB_NAME}`);
+  console.log("Schema deployed successfully.");
 } finally {
   await connection.end();
 }

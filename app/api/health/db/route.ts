@@ -7,7 +7,6 @@ export async function GET() {
 
     return NextResponse.json({
       ok: true,
-      database: process.env.DB_NAME,
       rows
     });
   } catch (error) {

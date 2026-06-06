@@ -13,19 +13,13 @@ Open `http://localhost:3000`.
 
 ## Database
 
-Create `.env.local` from `.env.example` and set the Hostinger MySQL password:
+Create `.env.local` from `.env.example` and set your private database credentials:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Configured defaults:
-
-- `DB_HOST=srv2104.hstgr.io`
-- `DB_NAME=u130206374_FlowConnect`
-- `DB_USER=u130206374_flow`
-
-Deploy the MySQL schema after `DB_PASSWORD` is set:
+Deploy the MySQL schema after the database environment variables are set:
 
 ```bash
 npm run db:deploy
@@ -37,7 +31,7 @@ Check database connectivity from the app:
 GET /api/health/db
 ```
 
-Connection credentials are encrypted with `CONNECTION_ENCRYPTION_KEY`; set this to a long random server-only secret before saving real connections.
+Connection credentials are encrypted with a server-only encryption key. Set all secrets outside source control before saving real connections.
 
 ## Implemented Feature Areas
 
@@ -82,7 +76,7 @@ The core workflow engine should call connector definitions through the registry 
 
 ## Production Notes
 
-- Store `CONNECTION_ENCRYPTION_KEY` as a server-only secret and plan key rotation before production launch.
+- Store connection encryption secrets outside source control and plan key rotation before production launch.
 - Persist usage events and monthly rollups in MySQL using `sql/schema.sql`.
 - Enqueue workflow runs into BullMQ after `createWorkflowRunRecord`.
 - Recalculate template ratings from `template_ratings` rather than trusting client-submitted aggregates.
