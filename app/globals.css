@@ -102,6 +102,17 @@ a {
   color: white;
 }
 
+.button.danger {
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .button-row {
   display: flex;
   flex-wrap: wrap;

@@ -23,6 +23,7 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
   ]);
   const [message, setMessage] = useState<string | null>(null);
   const [forms, setForms] = useState(initialForms);
+  const [editingFormId, setEditingFormId] = useState<number | null>(null);
   const [formPrompt, setFormPrompt] = useState("");
   const [proposal, setProposal] = useState<FormProposal | null>(null);
   const [proposalLoading, setProposalLoading] = useState(false);
@@ -45,11 +46,42 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
     ]);
   };
 
-  const saveForm = async () => {
-    setMessage("Saving form...");
+  const removeField = (index: number) => {
+    setFields((current) => current.filter((_, fieldIndex) => fieldIndex !== index));
+  };
 
-    const response = await fetch("/api/forms", {
-      method: "POST",
+  const resetEditor = () => {
+    setEditingFormId(null);
+    setName("New intake form");
+    setDescription("Collect the data needed to start a workflow.");
+    setSuccessMessage("Thanks. Your response was submitted.");
+    setHeaderImageUrl("");
+    setTheme("blue");
+    setFontStyle("system");
+    setFields([
+      { label: "Email", fieldKey: "email", fieldType: "email", required: true, position: 1 },
+      { label: "Message", fieldKey: "message", fieldType: "textarea", required: true, position: 2 }
+    ]);
+  };
+
+  const editForm = (form: IntakeForm) => {
+    setEditingFormId(form.id);
+    setName(form.name);
+    setDescription(form.description);
+    setSuccessMessage(form.successMessage);
+    setHeaderImageUrl(form.headerImageUrl);
+    setTheme(form.theme);
+    setFontStyle(form.fontStyle);
+    setFields(form.fields.map((field, index) => ({ ...field, position: index + 1 })));
+    setMessage(`Editing ${form.name}.`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const saveForm = async () => {
+    setMessage(editingFormId ? "Updating form..." : "Saving form...");
+
+    const response = await fetch(editingFormId ? `/api/forms/${editingFormId}` : "/api/forms", {
+      method: editingFormId ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name,
@@ -67,12 +99,43 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
     };
 
     if (!response.ok || !payload.form) {
-      setMessage(payload.error ?? "Form could not be saved.");
+      setMessage(payload.error ?? (editingFormId ? "Form could not be updated." : "Form could not be saved."));
       return;
     }
 
-    setForms((current) => [payload.form as IntakeForm, ...current]);
-    setMessage(`Form published: /f/${payload.form.slug}`);
+    setForms((current) =>
+      editingFormId
+        ? current.map((form) => (form.id === payload.form?.id ? (payload.form as IntakeForm) : form))
+        : [payload.form as IntakeForm, ...current]
+    );
+    setEditingFormId(null);
+    setMessage(editingFormId ? `Form updated: /f/${payload.form.slug}` : `Form published: /f/${payload.form.slug}`);
+  };
+
+  const deleteForm = async (form: IntakeForm) => {
+    const confirmed = window.confirm(`Delete "${form.name}"? This will remove the public form and its submissions.`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setMessage(`Deleting ${form.name}...`);
+
+    const response = await fetch(`/api/forms/${form.id}`, { method: "DELETE" });
+    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+    if (!response.ok) {
+      setMessage(payload.error ?? "Form could not be deleted.");
+      return;
+    }
+
+    setForms((current) => current.filter((item) => item.id !== form.id));
+
+    if (editingFormId === form.id) {
+      resetEditor();
+    }
+
+    setMessage("Form deleted.");
   };
 
   const getPublicUrl = (slug: string) => `${window.location.origin}/f/${slug}`;
@@ -80,6 +143,8 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
     `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=12&data=${encodeURIComponent(getPublicUrl(slug))}`;
   const getEmbedCode = (slug: string) =>
     `<iframe src="${window.location.origin}/embed/forms/${slug}" width="100%" height="720" style="border:0;border-radius:8px;" title="FlowConnect intake form"></iframe>`;
+  const getMessageClass = (value: string) =>
+    value.includes("could not") || value.includes("required") || value.includes("failed") ? "form-error" : "form-success";
 
   const generateFormProposal = async () => {
     setProposalLoading(true);
@@ -115,6 +180,7 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
     setDescription(proposal.description);
     setSuccessMessage(proposal.successMessage);
     setFields(proposal.fields);
+    setEditingFormId(null);
     setMessage("AI form fields applied. Review and save when ready.");
   };
 
@@ -123,12 +189,19 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
       <div className="panel workflow-toolbar">
         <div>
           <span className="badge">Hosted forms</span>
-          <h1>Create an intake form trigger</h1>
+          <h1>{editingFormId ? "Edit intake form trigger" : "Create an intake form trigger"}</h1>
           <p className="lead">Submissions become workflow trigger data under `form.email`, `form.message`, and your custom fields.</p>
         </div>
-        <button className="button primary" onClick={saveForm} type="button">
-          Save form
-        </button>
+        <div className="button-row">
+          {editingFormId ? (
+            <button className="button" onClick={resetEditor} type="button">
+              Cancel edit
+            </button>
+          ) : null}
+          <button className="button primary" onClick={saveForm} type="button">
+            {editingFormId ? "Update form" : "Save form"}
+          </button>
+        </div>
       </div>
 
       <section className="panel ai-proposal-panel">
@@ -248,6 +321,9 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
               />
               Required
             </label>
+            <button className="button danger" disabled={fields.length === 1} onClick={() => removeField(index)} type="button">
+              Remove field
+            </button>
           </article>
         ))}
       </section>
@@ -255,7 +331,7 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
       <button className="button big-button" onClick={addField} type="button">
         Add field
       </button>
-      {message ? <p className={message.includes("published") ? "form-success" : "form-error"}>{message}</p> : null}
+      {message ? <p className={getMessageClass(message)}>{message}</p> : null}
 
       <section className="section">
         <h2>Published forms</h2>
@@ -295,6 +371,12 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
                   </button>
                   <button className="button" onClick={() => navigator.clipboard?.writeText(getEmbedCode(form.slug))} type="button">
                     Copy embed
+                  </button>
+                  <button className="button" onClick={() => editForm(form)} type="button">
+                    Edit
+                  </button>
+                  <button className="button danger" onClick={() => deleteForm(form)} type="button">
+                    Delete
                   </button>
                 </div>
               </article>

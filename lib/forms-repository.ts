@@ -80,6 +80,20 @@ const loadFields = async (formId: number) => {
   return rows.map(mapField);
 };
 
+const mapForm = async (row: FormRow): Promise<IntakeForm> => ({
+  id: row.id,
+  userId: row.user_id,
+  name: row.name,
+  slug: row.slug,
+  description: row.description ?? "",
+  successMessage: row.success_message,
+  headerImageUrl: row.header_image_url ?? "",
+  theme: row.theme ?? "blue",
+  fontStyle: row.font_style ?? "system",
+  status: row.status,
+  fields: await loadFields(row.id)
+});
+
 export const createIntakeFormForUser = async ({
   userId,
   name,
@@ -149,19 +163,7 @@ export const listIntakeFormsForUser = async (userId: number) => {
   );
 
   return Promise.all(
-    rows.map(async (row) => ({
-      id: row.id,
-      userId: row.user_id,
-      name: row.name,
-      slug: row.slug,
-      description: row.description ?? "",
-      successMessage: row.success_message,
-      headerImageUrl: row.header_image_url ?? "",
-      theme: row.theme ?? "blue",
-      fontStyle: row.font_style ?? "system",
-      status: row.status,
-      fields: await loadFields(row.id)
-    }))
+    rows.map(mapForm)
   );
 };
 
@@ -178,19 +180,112 @@ export const getIntakeFormById = async (formId: number, userId: number) => {
     return null;
   }
 
-  return {
-    id: rows[0].id,
-    userId: rows[0].user_id,
-    name: rows[0].name,
-    slug: rows[0].slug,
-    description: rows[0].description ?? "",
-    successMessage: rows[0].success_message,
-    headerImageUrl: rows[0].header_image_url ?? "",
-    theme: rows[0].theme ?? "blue",
-    fontStyle: rows[0].font_style ?? "system",
-    status: rows[0].status,
-    fields: await loadFields(rows[0].id)
-  };
+  return mapForm(rows[0]);
+};
+
+export const updateIntakeFormForUser = async ({
+  formId,
+  userId,
+  name,
+  description,
+  successMessage,
+  headerImageUrl,
+  theme,
+  fontStyle,
+  fields
+}: {
+  formId: number;
+  userId: number;
+  name: string;
+  description: string;
+  successMessage: string;
+  headerImageUrl: string;
+  theme: IntakeForm["theme"];
+  fontStyle: IntakeForm["fontStyle"];
+  fields: IntakeField[];
+}) => {
+  const connection = await db().getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [result] = await connection.execute<ResultSetHeader>(
+      `UPDATE forms
+       SET name = :name,
+           description = :description,
+           success_message = :successMessage,
+           header_image_url = :headerImageUrl,
+           theme = :theme,
+           font_style = :fontStyle
+       WHERE id = :formId AND user_id = :userId`,
+      { formId, userId, name, description, successMessage, headerImageUrl, theme, fontStyle }
+    );
+
+    if (result.affectedRows === 0) {
+      await connection.rollback();
+      return null;
+    }
+
+    await connection.execute(`DELETE FROM form_fields WHERE form_id = :formId`, { formId });
+
+    for (const [index, field] of fields.entries()) {
+      await connection.execute(
+        `INSERT INTO form_fields (form_id, label, field_key, field_type, is_required, options, position)
+         VALUES (:formId, :label, :fieldKey, :fieldType, :isRequired, :options, :position)`,
+        {
+          formId,
+          label: field.label,
+          fieldKey: field.fieldKey,
+          fieldType: field.fieldType,
+          isRequired: field.required ? 1 : 0,
+          options: JSON.stringify(field.options ?? []),
+          position: index + 1
+        }
+      );
+    }
+
+    await connection.commit();
+
+    return getIntakeFormById(formId, userId);
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
+export const deleteIntakeFormForUser = async (formId: number, userId: number) => {
+  const connection = await db().getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [rows] = await connection.execute<FormRow[]>(
+      `SELECT id, user_id, name, slug, description, success_message, header_image_url, theme, font_style, status
+       FROM forms
+       WHERE id = :formId AND user_id = :userId
+       LIMIT 1`,
+      { formId, userId }
+    );
+
+    if (!rows[0]) {
+      await connection.rollback();
+      return false;
+    }
+
+    await connection.execute(`DELETE FROM form_submissions WHERE form_id = :formId`, { formId });
+    await connection.execute(`DELETE FROM form_fields WHERE form_id = :formId`, { formId });
+    await connection.execute(`DELETE FROM forms WHERE id = :formId AND user_id = :userId`, { formId, userId });
+
+    await connection.commit();
+    return true;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 };
 
 export const getPublishedIntakeFormBySlug = async (slug: string) => {
@@ -206,19 +301,7 @@ export const getPublishedIntakeFormBySlug = async (slug: string) => {
     return null;
   }
 
-  return {
-    id: rows[0].id,
-    userId: rows[0].user_id,
-    name: rows[0].name,
-    slug: rows[0].slug,
-    description: rows[0].description ?? "",
-    successMessage: rows[0].success_message,
-    headerImageUrl: rows[0].header_image_url ?? "",
-    theme: rows[0].theme ?? "blue",
-    fontStyle: rows[0].font_style ?? "system",
-    status: rows[0].status,
-    fields: await loadFields(rows[0].id)
-  };
+  return mapForm(rows[0]);
 };
 
 export const saveIntakeSubmission = async (
