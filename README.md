@@ -43,6 +43,7 @@ AI actions use server-only OpenAI environment variables. Keep the real API key o
 - Usage dashboard for current plan, monthly usage, remaining workflow runs, and upgrade CTA.
 - Workflow marketplace with browse, search, app/category filters, install/clone, ratings, official templates, and five starter templates.
 - User signup, login, logout, profile, and HTTP-only session cookies.
+- AI workflow proposal generation for connection-specific async API flows.
 - API routes for connector registry, connector health tests, token refresh, usage tracking, template install/rating, and workflow draft/run creation.
 - MySQL schema for users, connectors, workflows, runs, logs, usage events, usage rollups, templates, and template ratings.
 
@@ -58,6 +59,7 @@ AI actions use server-only OpenAI environment variables. Keep the real API key o
 - `lib/connection-secrets.ts`: AES-GCM encryption for saved connection credentials.
 - `lib/auth.ts`: User signup/login/session helpers.
 - `lib/openai-config.ts`: Server-only OpenAI key/model config helper.
+- `lib/ai-workflow-proposal.ts`: OpenAI-backed workflow proposal generation.
 - `sql/schema.sql`: MySQL schema for the new platform features.
 
 ## Adding a Connector

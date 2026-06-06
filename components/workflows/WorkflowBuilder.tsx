@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { ConnectorDefinition } from "@/lib/connector-sdk";
 import { BrandIcon } from "@/components/BrandIcon";
+import type { WorkflowProposal } from "@/lib/ai-workflow-proposal";
 
 type ClientConnector = Omit<ConnectorDefinition, "testConnection" | "refreshToken">;
 
@@ -32,6 +33,10 @@ export function WorkflowBuilder({ connectors }: { connectors: ClientConnector[] 
   const [workflowName, setWorkflowName] = useState("New FlowConnect workflow");
   const [steps, setSteps] = useState<BuilderStep[]>(initialSteps);
   const [message, setMessage] = useState<string | null>(null);
+  const [proposalPrompt, setProposalPrompt] = useState("");
+  const [proposalConnectorId, setProposalConnectorId] = useState(connectors[0]?.id ?? "");
+  const [proposal, setProposal] = useState<WorkflowProposal | null>(null);
+  const [proposalLoading, setProposalLoading] = useState(false);
 
   const dataPills = useMemo(
     () =>
@@ -103,6 +108,54 @@ export function WorkflowBuilder({ connectors }: { connectors: ClientConnector[] 
     setMessage(payload.message ?? "Workflow saved.");
   };
 
+  const generateProposal = async () => {
+    setProposalLoading(true);
+    setMessage(null);
+
+    const response = await fetch("/api/ai/workflow-proposals", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        connectorId: proposalConnectorId,
+        prompt: proposalPrompt
+      })
+    });
+    const payload = (await response.json().catch(() => ({}))) as {
+      proposal?: WorkflowProposal;
+      error?: string;
+    };
+
+    setProposalLoading(false);
+
+    if (!response.ok || !payload.proposal) {
+      setMessage(payload.error ?? "AI proposal could not be created.");
+      return;
+    }
+
+    setProposal(payload.proposal);
+    setMessage("AI workflow proposal ready.");
+  };
+
+  const applyProposal = () => {
+    if (!proposal) {
+      return;
+    }
+
+    setWorkflowName(proposal.title);
+    setSteps(
+      proposal.steps.map((step) => ({
+        id: step.id,
+        type: step.type,
+        name: step.name,
+        connectorId: step.connectorId,
+        action: step.action,
+        inputBindings: step.inputBindings ?? {},
+        outputFields: step.outputFields ?? []
+      }))
+    );
+    setMessage("Proposal applied to the builder.");
+  };
+
   return (
     <section className="workflow-builder">
       <div className="panel workflow-toolbar">
@@ -122,6 +175,66 @@ export function WorkflowBuilder({ connectors }: { connectors: ClientConnector[] 
           <input value={workflowName} onChange={(event) => setWorkflowName(event.target.value)} />
         </label>
       </div>
+
+      <section className="panel ai-proposal-panel">
+        <div>
+          <span className="badge">AI proposal</span>
+          <h2>Prompt a connection into a dev workflow</h2>
+          <p className="muted">Describe the async API flow you want. The proposal will include steps, actions, data pills, and dot-walk mappings.</p>
+        </div>
+        <div className="grid two">
+          <label>
+            <span>Connection app</span>
+            <select value={proposalConnectorId} onChange={(event) => setProposalConnectorId(event.target.value)}>
+              {connectors.map((connector) => (
+                <option key={connector.id} value={connector.id}>
+                  {connector.appName}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Prompt</span>
+            <input
+              placeholder="Example: Create incidents from intake forms, summarize them, and send the result to ServiceNow."
+              value={proposalPrompt}
+              onChange={(event) => setProposalPrompt(event.target.value)}
+            />
+          </label>
+        </div>
+        <button className="button primary big-button" disabled={proposalLoading || !proposalPrompt.trim()} onClick={generateProposal} type="button">
+          {proposalLoading ? "Generating proposal..." : "Generate AI workflow proposal"}
+        </button>
+        {proposal ? (
+          <div className="proposal-result">
+            <div>
+              <h3>{proposal.title}</h3>
+              <p className="muted">{proposal.summary}</p>
+            </div>
+            <div className="grid two">
+              <article className="card">
+                <strong>Assumptions</strong>
+                {proposal.assumptions.map((assumption) => (
+                  <p key={assumption}>{assumption}</p>
+                ))}
+              </article>
+              <article className="card">
+                <strong>Data pills</strong>
+                {proposal.dataPills.map((pill) => (
+                  <code key={pill}>{"{{"}{pill}{"}}"}</code>
+                ))}
+              </article>
+            </div>
+            <label>
+              <span>Async Function style proposal</span>
+              <textarea readOnly rows={8} value={proposal.asyncFunction} />
+            </label>
+            <button className="button" onClick={applyProposal} type="button">
+              Use proposal in builder
+            </button>
+          </div>
+        ) : null}
+      </section>
 
       <div className="workflow-layout">
         <div className="workflow-steps">
