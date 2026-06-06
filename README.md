@@ -33,6 +33,8 @@ GET /api/health/db
 
 Connection credentials are encrypted with a server-only encryption key. Set all secrets outside source control before saving real connections.
 
+AI actions use server-only OpenAI environment variables. Keep the real API key only in `.env.local` or your deployment provider secrets.
+
 ## Implemented Feature Areas
 
 - Connector SDK with typed metadata, auth, scopes, triggers, actions, connection testing, token refresh, rate limits, and error handling.
@@ -55,6 +57,7 @@ Connection credentials are encrypted with a server-only encryption key. Set all 
 - `lib/db.ts`: MySQL pool configured from environment variables.
 - `lib/connection-secrets.ts`: AES-GCM encryption for saved connection credentials.
 - `lib/auth.ts`: User signup/login/session helpers.
+- `lib/openai-config.ts`: Server-only OpenAI key/model config helper.
 - `sql/schema.sql`: MySQL schema for the new platform features.
 
 ## Adding a Connector
