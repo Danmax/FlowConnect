@@ -11,6 +11,32 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Database
+
+Create `.env.local` from `.env.example` and set the Hostinger MySQL password:
+
+```bash
+cp .env.example .env.local
+```
+
+Configured defaults:
+
+- `DB_HOST=srv2104.hstgr.io`
+- `DB_NAME=u130206374_FlowConnect`
+- `DB_USER=u130206374_flow`
+
+Deploy the MySQL schema after `DB_PASSWORD` is set:
+
+```bash
+npm run db:deploy
+```
+
+Check database connectivity from the app:
+
+```text
+GET /api/health/db
+```
+
 ## Implemented Feature Areas
 
 - Connector SDK with typed metadata, auth, scopes, triggers, actions, connection testing, token refresh, rate limits, and error handling.
@@ -29,6 +55,7 @@ Open `http://localhost:3000`.
 - `lib/usage-events.ts`: Usage event creation, plan limit checks, and projected usage rollups.
 - `lib/marketplace.ts`: Template definitions, search/filter helper, and clone helper.
 - `lib/workflow-engine.ts`: Workflow validation and run record creation.
+- `lib/db.ts`: MySQL pool configured from environment variables.
 - `sql/schema.sql`: MySQL schema for the new platform features.
 
 ## Adding a Connector

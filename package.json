@@ -7,10 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "db:deploy": "node scripts/deploy-schema.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
+    "mysql2": "^3.22.4",
     "next": "^16.2.7",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
