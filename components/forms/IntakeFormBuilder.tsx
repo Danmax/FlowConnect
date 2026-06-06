@@ -15,6 +15,7 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
   const [description, setDescription] = useState("Collect the data needed to start a workflow.");
   const [successMessage, setSuccessMessage] = useState("Thanks. Your response was submitted.");
   const [headerImageUrl, setHeaderImageUrl] = useState("");
+  const [imageUploading, setImageUploading] = useState(false);
   const [theme, setTheme] = useState<IntakeForm["theme"]>("blue");
   const [fontStyle, setFontStyle] = useState<IntakeForm["fontStyle"]>("system");
   const [fields, setFields] = useState<IntakeField[]>([
@@ -111,6 +112,39 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
     );
     setEditingFormId(null);
     setMessage(editingFormId ? `Form updated: /f/${payload.form.slug}` : `Form published: /f/${payload.form.slug}`);
+  };
+
+  const uploadHeaderImage = async (file: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    setImageUploading(true);
+    setMessage("Optimizing image...");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch("/api/uploads/images", {
+      method: "POST",
+      body: formData
+    });
+    const payload = (await response.json().catch(() => ({}))) as {
+      url?: string;
+      originalSize?: number;
+      optimizedSize?: number;
+      error?: string;
+    };
+
+    setImageUploading(false);
+
+    if (!response.ok || !payload.url) {
+      setMessage(payload.error ?? "Image could not be uploaded.");
+      return;
+    }
+
+    setHeaderImageUrl(payload.url);
+    setMessage(`Image optimized to WebP: ${Math.round((payload.optimizedSize ?? 0) / 1024)}KB.`);
   };
 
   const deleteForm = async (form: IntakeForm) => {
@@ -260,6 +294,15 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
         <label>
           <span>Header image URL</span>
           <input placeholder="https://example.com/header.jpg" value={headerImageUrl} onChange={(event) => setHeaderImageUrl(event.target.value)} />
+        </label>
+        <label>
+          <span>Upload header image</span>
+          <input
+            accept="image/avif,image/gif,image/jpeg,image/png,image/webp"
+            disabled={imageUploading}
+            onChange={(event) => uploadHeaderImage(event.target.files?.[0] ?? null)}
+            type="file"
+          />
         </label>
         <div className="grid two">
           <label>

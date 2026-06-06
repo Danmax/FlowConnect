@@ -119,6 +119,14 @@ a {
   gap: 10px;
 }
 
+.section-heading {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
 .big-button {
   font-size: 17px;
   justify-content: center;
@@ -279,6 +287,77 @@ label {
   display: grid;
   gap: 18px;
   grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.workflow-list,
+.run-list {
+  display: grid;
+  gap: 12px;
+}
+
+.workflow-list-item,
+.run-item {
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 14px;
+}
+
+.run-item {
+  align-items: start;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.run-item pre {
+  background: #0f172a;
+  border-radius: 8px;
+  color: #e2e8f0;
+  grid-column: 1 / -1;
+  margin: 0;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre-wrap;
+}
+
+.status-pill {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 900;
+  margin-bottom: 6px;
+  padding: 5px 9px;
+  text-transform: uppercase;
+}
+
+.status-draft,
+.status-inactive,
+.run-cancelled {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.status-published {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-active,
+.run-complete {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.run-in-progress {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.run-error {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .workflow-steps,
@@ -663,7 +742,14 @@ input {
   .grid.two,
   .grid.three,
   .brand-button-grid,
-  .results-grid {
+  .results-grid,
+  .workflow-list-item,
+  .run-item {
     grid-template-columns: 1fr;
+  }
+
+  .section-heading {
+    align-items: start;
+    flex-direction: column;
   }
 }

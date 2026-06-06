@@ -76,12 +76,14 @@ CREATE TABLE IF NOT EXISTS workflows (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NOT NULL,
   name VARCHAR(180) NOT NULL,
-  status ENUM('draft', 'active', 'inactive') NOT NULL DEFAULT 'draft',
+  status ENUM('draft', 'published', 'active', 'inactive') NOT NULL DEFAULT 'draft',
   source_template_id VARCHAR(120) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+ALTER TABLE workflows MODIFY status ENUM('draft', 'published', 'active', 'inactive') NOT NULL DEFAULT 'draft';
 
 CREATE TABLE IF NOT EXISTS workflow_versions (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

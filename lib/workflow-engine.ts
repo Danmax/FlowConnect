@@ -20,14 +20,15 @@ export type WorkflowDraft = {
   id: string;
   userId: string;
   name: string;
-  status: "draft" | "active" | "inactive";
+  status: "draft" | "published" | "active" | "inactive";
   sourceTemplateId?: string;
   steps: WorkflowStep[];
+  databaseId?: number;
 };
 
 export const validateWorkflowForActivation = (workflow: WorkflowDraft, usage: UsageSnapshot = emptyUsageSnapshot) => {
   const errors: string[] = [];
-  const runLimit = checkUsageLimit(usage, "activeWorkflows", workflow.status === "active" ? 0 : 1);
+  const runLimit = workflow.status === "active" ? checkUsageLimit(usage, "activeWorkflows", 1) : { allowed: true };
 
   if (!workflow.steps.some((step) => step.type === "trigger")) {
     errors.push("Workflow needs one trigger step.");

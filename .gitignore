@@ -7,3 +7,5 @@ dist
 .env.*.local
 *.log
 tsconfig.tsbuildinfo
+public/uploads/*
+!public/uploads/.gitkeep

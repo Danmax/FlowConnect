@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import type { ConnectorDefinition } from "@/lib/connector-sdk";
 import { BrandIcon } from "@/components/BrandIcon";
 import type { WorkflowProposal } from "@/lib/ai-workflow-proposal";
+import type { WorkflowDraft } from "@/lib/workflow-engine";
+import type { WorkflowListItem, WorkflowRunSummary, WorkflowStatus } from "@/lib/workflow-repository";
 
 type ClientConnector = Omit<ConnectorDefinition, "testConnection" | "refreshToken">;
 
@@ -29,9 +31,27 @@ const initialSteps: BuilderStep[] = [
 
 const stepTypes = ["trigger", "transform", "ai_action", "function", "connector_action", "rest_api"] as const;
 
-export function WorkflowBuilder({ connectors }: { connectors: ClientConnector[] }) {
+const formatRunLabel = (run: WorkflowRunSummary | null) => {
+  if (!run) {
+    return "No executions yet";
+  }
+
+  return `${run.label} (${run.status})`;
+};
+
+export function WorkflowBuilder({
+  connectors,
+  initialWorkflows
+}: {
+  connectors: ClientConnector[];
+  initialWorkflows: WorkflowListItem[];
+}) {
+  const [workflowDatabaseId, setWorkflowDatabaseId] = useState<number | null>(null);
   const [workflowName, setWorkflowName] = useState("New FlowConnect workflow");
   const [steps, setSteps] = useState<BuilderStep[]>(initialSteps);
+  const [workflows, setWorkflows] = useState(initialWorkflows);
+  const [selectedRuns, setSelectedRuns] = useState<WorkflowRunSummary[]>([]);
+  const [selectedRunsWorkflowId, setSelectedRunsWorkflowId] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [proposalPrompt, setProposalPrompt] = useState("");
   const [proposalConnectorId, setProposalConnectorId] = useState(connectors[0]?.id ?? "");
@@ -80,15 +100,25 @@ export function WorkflowBuilder({ connectors }: { connectors: ClientConnector[] 
     setSteps((current) => current.filter((step) => step.id !== stepId));
   };
 
-  const saveWorkflow = async () => {
+  const refreshWorkflows = async () => {
+    const response = await fetch("/api/workflows");
+    const payload = (await response.json().catch(() => ({}))) as { workflows?: WorkflowListItem[] };
+
+    if (response.ok && payload.workflows) {
+      setWorkflows(payload.workflows);
+    }
+  };
+
+  const saveWorkflow = async (status: WorkflowStatus = "draft") => {
     setMessage("Saving workflow...");
 
     const response = await fetch("/api/workflows", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        databaseId: workflowDatabaseId ?? undefined,
         name: workflowName,
-        status: "draft",
+        status,
         steps: steps.map((step) => ({
           ...step,
           config: {
@@ -98,14 +128,89 @@ export function WorkflowBuilder({ connectors }: { connectors: ClientConnector[] 
         }))
       })
     });
-    const payload = (await response.json()) as { message?: string; validation?: { errors?: string[] }; error?: string };
+    const payload = (await response.json()) as {
+      message?: string;
+      workflow?: WorkflowDraft;
+      validation?: { errors?: string[] };
+      error?: string;
+    };
 
     if (!response.ok) {
       setMessage(payload.validation?.errors?.join(" ") ?? payload.error ?? "Workflow could not be saved.");
       return;
     }
 
+    if (payload.workflow?.databaseId) {
+      setWorkflowDatabaseId(payload.workflow.databaseId);
+    }
+
+    await refreshWorkflows();
     setMessage(payload.message ?? "Workflow saved.");
+  };
+
+  const loadWorkflow = async (workflowId: number) => {
+    setMessage("Loading workflow...");
+    const response = await fetch(`/api/workflows/${workflowId}`);
+    const payload = (await response.json().catch(() => ({}))) as { workflow?: WorkflowDraft; error?: string };
+
+    if (!response.ok || !payload.workflow) {
+      setMessage(payload.error ?? "Workflow could not be loaded.");
+      return;
+    }
+
+    setWorkflowDatabaseId(payload.workflow.databaseId ?? workflowId);
+    setWorkflowName(payload.workflow.name);
+    setSteps(
+      payload.workflow.steps.map((step) => ({
+        id: step.id,
+        type: step.type,
+        name: step.name,
+        connectorId: step.connectorId,
+        action: step.action,
+        inputBindings: step.inputBindings ?? {},
+        outputFields: step.outputFields ?? []
+      }))
+    );
+    setMessage(`Loaded ${payload.workflow.name}.`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const newWorkflow = () => {
+    setWorkflowDatabaseId(null);
+    setWorkflowName("New FlowConnect workflow");
+    setSteps(initialSteps);
+    setMessage("New workflow draft ready.");
+  };
+
+  const updateWorkflowStatus = async (workflowId: number, status: WorkflowStatus) => {
+    setMessage(`Updating workflow to ${status}...`);
+    const response = await fetch(`/api/workflows/${workflowId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status })
+    });
+    const payload = (await response.json().catch(() => ({}))) as { message?: string; validation?: { errors?: string[] }; error?: string };
+
+    if (!response.ok) {
+      setMessage(payload.validation?.errors?.join(" ") ?? payload.error ?? "Workflow status could not be updated.");
+      return;
+    }
+
+    await refreshWorkflows();
+    setMessage(payload.message ?? "Workflow status updated.");
+  };
+
+  const viewRuns = async (workflowId: number) => {
+    const response = await fetch(`/api/workflows/${workflowId}/runs`);
+    const payload = (await response.json().catch(() => ({}))) as { runs?: WorkflowRunSummary[]; error?: string };
+
+    if (!response.ok || !payload.runs) {
+      setMessage(payload.error ?? "Workflow runs could not be loaded.");
+      return;
+    }
+
+    setSelectedRunsWorkflowId(workflowId);
+    setSelectedRuns(payload.runs);
   };
 
   const generateProposal = async () => {
@@ -142,6 +247,7 @@ export function WorkflowBuilder({ connectors }: { connectors: ClientConnector[] 
     }
 
     setWorkflowName(proposal.title);
+    setWorkflowDatabaseId(null);
     setSteps(
       proposal.steps.map((step) => ({
         id: step.id,
@@ -161,12 +267,20 @@ export function WorkflowBuilder({ connectors }: { connectors: ClientConnector[] 
       <div className="panel workflow-toolbar">
         <div>
           <span className="badge">Workflow builder</span>
-          <h1>Create a multi-step flow</h1>
+          <h1>{workflowDatabaseId ? "Edit saved workflow" : "Create a multi-step flow"}</h1>
           <p className="lead">Use data pills like {"{{trigger.form.email}}"} to dot-walk into outputs from previous steps.</p>
         </div>
-        <button className="button primary" onClick={saveWorkflow} type="button">
-          Save workflow
-        </button>
+        <div className="button-row">
+          <button className="button" onClick={newWorkflow} type="button">
+            New
+          </button>
+          <button className="button primary" onClick={() => saveWorkflow("draft")} type="button">
+            Save draft
+          </button>
+          <button className="button" onClick={() => saveWorkflow("published")} type="button">
+            Publish
+          </button>
+        </div>
       </div>
 
       <div className="panel">
@@ -175,6 +289,78 @@ export function WorkflowBuilder({ connectors }: { connectors: ClientConnector[] 
           <input value={workflowName} onChange={(event) => setWorkflowName(event.target.value)} />
         </label>
       </div>
+
+      <section className="panel">
+        <div className="section-heading">
+          <div>
+            <span className="badge">Saved workflows</span>
+            <h2>Drafts and active flows</h2>
+          </div>
+          <button className="button" onClick={refreshWorkflows} type="button">
+            Refresh
+          </button>
+        </div>
+        <div className="workflow-list">
+          {workflows.length > 0 ? (
+            workflows.map((workflow) => (
+              <article className="workflow-list-item" key={workflow.id}>
+                <div>
+                  <span className={`status-pill status-${workflow.status}`}>{workflow.status}</span>
+                  <h3>{workflow.name}</h3>
+                  <p className="muted">
+                    {workflow.stepCount} steps | Latest execution: {formatRunLabel(workflow.latestRun)}
+                  </p>
+                </div>
+                <div className="button-row">
+                  <button className="button" onClick={() => loadWorkflow(workflow.id)} type="button">
+                    Edit
+                  </button>
+                  <button className="button" onClick={() => updateWorkflowStatus(workflow.id, "published")} type="button">
+                    Publish
+                  </button>
+                  <button className="button primary" onClick={() => updateWorkflowStatus(workflow.id, "active")} type="button">
+                    Activate
+                  </button>
+                  <button className="button" onClick={() => updateWorkflowStatus(workflow.id, "inactive")} type="button">
+                    Inactivate
+                  </button>
+                  <button className="button" onClick={() => viewRuns(workflow.id)} type="button">
+                    Runs
+                  </button>
+                </div>
+              </article>
+            ))
+          ) : (
+            <article className="card">
+              <h3>No saved workflows yet</h3>
+              <p className="muted">Save a draft or install a template to see workflows here.</p>
+            </article>
+          )}
+        </div>
+      </section>
+
+      {selectedRunsWorkflowId ? (
+        <section className="panel">
+          <h2>Execution status</h2>
+          <div className="run-list">
+            {selectedRuns.length > 0 ? (
+              selectedRuns.map((run) => (
+                <article className="run-item" key={run.id}>
+                  <span className={`status-pill run-${run.label.replace(" ", "-")}`}>{run.label}</span>
+                  <strong>Run #{run.id}</strong>
+                  <p className="muted">
+                    Started {new Date(run.createdAt).toLocaleString()}
+                    {run.completedAt ? ` | Completed ${new Date(run.completedAt).toLocaleString()}` : ""}
+                  </p>
+                  {run.errorDetails ? <pre>{JSON.stringify(run.errorDetails, null, 2)}</pre> : null}
+                </article>
+              ))
+            ) : (
+              <p className="muted">No execution records for this workflow yet.</p>
+            )}
+          </div>
+        </section>
+      ) : null}
 
       <section className="panel ai-proposal-panel">
         <div>
@@ -366,7 +552,7 @@ export function WorkflowBuilder({ connectors }: { connectors: ClientConnector[] 
         </aside>
       </div>
 
-      {message ? <p className={message.includes("saved") ? "form-success" : "form-error"}>{message}</p> : null}
+      {message ? <p className={message.includes("could not") || message.includes("errors") ? "form-error" : "form-success"}>{message}</p> : null}
     </section>
   );
 }
