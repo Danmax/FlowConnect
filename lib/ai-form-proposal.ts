@@ -40,13 +40,15 @@ const coerceProposal = (value: unknown, prompt: string): FormProposal => {
     successMessage: proposal.successMessage ?? fallback.successMessage,
     fields: fields.map((field, index) => {
       const label = String(field.label ?? `Field ${index + 1}`);
+      const fieldKey = slugifyFieldKey(String(field.fieldKey ?? label));
       const fieldType = allowedFieldTypes.has(String(field.fieldType)) ? field.fieldType : "text";
 
       return {
         label,
-        fieldKey: slugifyFieldKey(String(field.fieldKey ?? label)),
+        fieldKey,
         fieldType,
         required: Boolean(field.required),
+        hashPii: ["email", "phone", "name"].some((value) => fieldKey.includes(value)),
         options: Array.isArray(field.options) ? field.options.map(String) : [],
         position: index + 1
       };

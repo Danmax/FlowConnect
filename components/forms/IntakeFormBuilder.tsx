@@ -18,8 +18,8 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
   const [theme, setTheme] = useState<IntakeForm["theme"]>("blue");
   const [fontStyle, setFontStyle] = useState<IntakeForm["fontStyle"]>("system");
   const [fields, setFields] = useState<IntakeField[]>([
-    { label: "Email", fieldKey: "email", fieldType: "email", required: true, position: 1 },
-    { label: "Message", fieldKey: "message", fieldType: "textarea", required: true, position: 2 }
+    { label: "Email", fieldKey: "email", fieldType: "email", required: true, hashPii: true, position: 1 },
+    { label: "Message", fieldKey: "message", fieldType: "textarea", required: true, hashPii: false, position: 2 }
   ]);
   const [message, setMessage] = useState<string | null>(null);
   const [forms, setForms] = useState(initialForms);
@@ -41,6 +41,7 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
         fieldKey: `field_${position}`,
         fieldType: "text",
         required: false,
+        hashPii: false,
         position
       }
     ]);
@@ -59,8 +60,8 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
     setTheme("blue");
     setFontStyle("system");
     setFields([
-      { label: "Email", fieldKey: "email", fieldType: "email", required: true, position: 1 },
-      { label: "Message", fieldKey: "message", fieldType: "textarea", required: true, position: 2 }
+      { label: "Email", fieldKey: "email", fieldType: "email", required: true, hashPii: true, position: 1 },
+      { label: "Message", fieldKey: "message", fieldType: "textarea", required: true, hashPii: false, position: 2 }
     ]);
   };
 
@@ -321,6 +322,14 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
               />
               Required
             </label>
+            <label className="checkbox-label">
+              <input
+                checked={Boolean(field.hashPii)}
+                onChange={(event) => updateField(index, { hashPii: event.target.checked })}
+                type="checkbox"
+              />
+              Hash PII on submit
+            </label>
             <button className="button danger" disabled={fields.length === 1} onClick={() => removeField(index)} type="button">
               Remove field
             </button>
@@ -365,6 +374,9 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
                 <div className="button-row">
                   <a className="button primary" href={`/f/${form.slug}`} target="_blank" rel="noreferrer">
                     Preview
+                  </a>
+                  <a className="button" href={`/forms/${form.id}/results`}>
+                    Results
                   </a>
                   <button className="button" onClick={() => navigator.clipboard?.writeText(getPublicUrl(form.slug))} type="button">
                     Copy URL

@@ -145,6 +145,8 @@ CREATE TABLE IF NOT EXISTS forms (
   header_image_url TEXT NULL,
   theme ENUM('blue', 'emerald', 'rose', 'slate', 'amber') NOT NULL DEFAULT 'blue',
   font_style ENUM('system', 'serif', 'mono', 'rounded') NOT NULL DEFAULT 'system',
+  share_privacy ENUM('private', 'team', 'public') NOT NULL DEFAULT 'private',
+  pii_sharing_mode ENUM('hash', 'exclude') NOT NULL DEFAULT 'hash',
   status ENUM('draft', 'published', 'disabled') NOT NULL DEFAULT 'draft',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -154,6 +156,8 @@ CREATE TABLE IF NOT EXISTS forms (
 ALTER TABLE forms ADD COLUMN IF NOT EXISTS header_image_url TEXT NULL;
 ALTER TABLE forms ADD COLUMN IF NOT EXISTS theme ENUM('blue', 'emerald', 'rose', 'slate', 'amber') NOT NULL DEFAULT 'blue';
 ALTER TABLE forms ADD COLUMN IF NOT EXISTS font_style ENUM('system', 'serif', 'mono', 'rounded') NOT NULL DEFAULT 'system';
+ALTER TABLE forms ADD COLUMN IF NOT EXISTS share_privacy ENUM('private', 'team', 'public') NOT NULL DEFAULT 'private';
+ALTER TABLE forms ADD COLUMN IF NOT EXISTS pii_sharing_mode ENUM('hash', 'exclude') NOT NULL DEFAULT 'hash';
 
 CREATE TABLE IF NOT EXISTS form_fields (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -162,12 +166,15 @@ CREATE TABLE IF NOT EXISTS form_fields (
   field_key VARCHAR(120) NOT NULL,
   field_type ENUM('text', 'email', 'number', 'textarea', 'dropdown', 'checkbox', 'date') NOT NULL,
   is_required BOOLEAN NOT NULL DEFAULT FALSE,
+  hash_pii BOOLEAN NOT NULL DEFAULT FALSE,
   options JSON NULL,
   position INT UNSIGNED NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (form_id) REFERENCES forms(id),
   UNIQUE KEY form_field_key_unique (form_id, field_key)
 );
+
+ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS hash_pii BOOLEAN NOT NULL DEFAULT FALSE;
 
 CREATE TABLE IF NOT EXISTS form_submissions (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
