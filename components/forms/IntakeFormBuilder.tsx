@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { FormProposal } from "@/lib/ai-form-proposal";
 import type { IntakeField, IntakeForm } from "@/lib/forms-repository";
 
 const fieldTypes: IntakeField["fieldType"][] = ["text", "email", "number", "textarea", "dropdown", "checkbox", "date"];
@@ -15,6 +16,9 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
   ]);
   const [message, setMessage] = useState<string | null>(null);
   const [forms, setForms] = useState(initialForms);
+  const [formPrompt, setFormPrompt] = useState("");
+  const [proposal, setProposal] = useState<FormProposal | null>(null);
+  const [proposalLoading, setProposalLoading] = useState(false);
 
   const updateField = (index: number, update: Partial<IntakeField>) => {
     setFields((current) => current.map((field, fieldIndex) => (fieldIndex === index ? { ...field, ...update } : field)));
@@ -65,6 +69,43 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
   const getEmbedCode = (slug: string) =>
     `<iframe src="${window.location.origin}/embed/forms/${slug}" width="100%" height="720" style="border:0;border-radius:8px;" title="FlowConnect intake form"></iframe>`;
 
+  const generateFormProposal = async () => {
+    setProposalLoading(true);
+    setMessage(null);
+
+    const response = await fetch("/api/ai/form-proposals", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: formPrompt })
+    });
+    const payload = (await response.json().catch(() => ({}))) as {
+      proposal?: FormProposal;
+      error?: string;
+    };
+
+    setProposalLoading(false);
+
+    if (!response.ok || !payload.proposal) {
+      setMessage(payload.error ?? "Form proposal could not be created.");
+      return;
+    }
+
+    setProposal(payload.proposal);
+    setMessage("AI form proposal ready.");
+  };
+
+  const applyProposal = () => {
+    if (!proposal) {
+      return;
+    }
+
+    setName(proposal.name);
+    setDescription(proposal.description);
+    setSuccessMessage(proposal.successMessage);
+    setFields(proposal.fields);
+    setMessage("AI form fields applied. Review and save when ready.");
+  };
+
   return (
     <section className="workflow-builder">
       <div className="panel workflow-toolbar">
@@ -77,6 +118,45 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
           Save form
         </button>
       </div>
+
+      <section className="panel ai-proposal-panel">
+        <div>
+          <span className="badge">AI form builder</span>
+          <h2>Prompt the fields you need</h2>
+          <p className="muted">Describe the intake form. AI will suggest the form name, fields, field keys, types, and required settings.</p>
+        </div>
+        <label>
+          <span>Prompt</span>
+          <textarea
+            placeholder="Example: Create a ServiceNow incident intake form with requester email, urgency, short description, category, affected system, and attachments notes."
+            value={formPrompt}
+            onChange={(event) => setFormPrompt(event.target.value)}
+            rows={4}
+          />
+        </label>
+        <button className="button primary big-button" disabled={proposalLoading || !formPrompt.trim()} onClick={generateFormProposal} type="button">
+          {proposalLoading ? "Generating fields..." : "Generate form fields"}
+        </button>
+        {proposal ? (
+          <div className="proposal-result">
+            <h3>{proposal.name}</h3>
+            <p className="muted">{proposal.description}</p>
+            <div className="grid two">
+              {proposal.fields.map((field) => (
+                <article className="card" key={field.fieldKey}>
+                  <strong>{field.label}</strong>
+                  <p className="muted">
+                    {field.fieldKey} | {field.fieldType} | {field.required ? "Required" : "Optional"}
+                  </p>
+                </article>
+              ))}
+            </div>
+            <button className="button" onClick={applyProposal} type="button">
+              Use these fields
+            </button>
+          </div>
+        ) : null}
+      </section>
 
       <div className="panel connection-form">
         <label>
