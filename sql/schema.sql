@@ -142,11 +142,18 @@ CREATE TABLE IF NOT EXISTS forms (
   slug VARCHAR(120) NOT NULL UNIQUE,
   description TEXT NULL,
   success_message VARCHAR(255) NOT NULL DEFAULT 'Thanks. Your response was submitted.',
+  header_image_url TEXT NULL,
+  theme ENUM('blue', 'emerald', 'rose', 'slate', 'amber') NOT NULL DEFAULT 'blue',
+  font_style ENUM('system', 'serif', 'mono', 'rounded') NOT NULL DEFAULT 'system',
   status ENUM('draft', 'published', 'disabled') NOT NULL DEFAULT 'draft',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+ALTER TABLE forms ADD COLUMN IF NOT EXISTS header_image_url TEXT NULL;
+ALTER TABLE forms ADD COLUMN IF NOT EXISTS theme ENUM('blue', 'emerald', 'rose', 'slate', 'amber') NOT NULL DEFAULT 'blue';
+ALTER TABLE forms ADD COLUMN IF NOT EXISTS font_style ENUM('system', 'serif', 'mono', 'rounded') NOT NULL DEFAULT 'system';
 
 CREATE TABLE IF NOT EXISTS form_fields (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

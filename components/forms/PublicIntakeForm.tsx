@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import { useState } from "react";
 import type { IntakeForm } from "@/lib/forms-repository";
 
@@ -20,7 +22,8 @@ export function PublicIntakeForm({ form, embedded = false }: { form: IntakeForm;
 
   return (
     <main className={embedded ? "embed-shell" : "shell"}>
-      <section className={embedded ? "public-form embedded-public-form" : "panel public-form"}>
+      <section className={`${embedded ? "public-form embedded-public-form" : "panel public-form"} form-theme-${form.theme} form-font-${form.fontStyle}`}>
+        {form.headerImageUrl ? <img alt="" className="form-header-image" src={form.headerImageUrl} /> : null}
         <span className="badge">FlowConnect Intake</span>
         <h1>{form.name}</h1>
         <p className="lead">{form.description}</p>

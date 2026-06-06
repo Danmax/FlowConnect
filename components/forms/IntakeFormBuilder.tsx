@@ -1,15 +1,22 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import { useState } from "react";
 import type { FormProposal } from "@/lib/ai-form-proposal";
 import type { IntakeField, IntakeForm } from "@/lib/forms-repository";
 
 const fieldTypes: IntakeField["fieldType"][] = ["text", "email", "number", "textarea", "dropdown", "checkbox", "date"];
+const themes: IntakeForm["theme"][] = ["blue", "emerald", "rose", "slate", "amber"];
+const fontStyles: IntakeForm["fontStyle"][] = ["system", "serif", "mono", "rounded"];
 
 export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[] }) {
   const [name, setName] = useState("New intake form");
   const [description, setDescription] = useState("Collect the data needed to start a workflow.");
   const [successMessage, setSuccessMessage] = useState("Thanks. Your response was submitted.");
+  const [headerImageUrl, setHeaderImageUrl] = useState("");
+  const [theme, setTheme] = useState<IntakeForm["theme"]>("blue");
+  const [fontStyle, setFontStyle] = useState<IntakeForm["fontStyle"]>("system");
   const [fields, setFields] = useState<IntakeField[]>([
     { label: "Email", fieldKey: "email", fieldType: "email", required: true, position: 1 },
     { label: "Message", fieldKey: "message", fieldType: "textarea", required: true, position: 2 }
@@ -48,6 +55,9 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
         name,
         description,
         successMessage,
+        headerImageUrl,
+        theme,
+        fontStyle,
         fields
       })
     });
@@ -66,6 +76,8 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
   };
 
   const getPublicUrl = (slug: string) => `${window.location.origin}/f/${slug}`;
+  const getQrUrl = (slug: string) =>
+    `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=12&data=${encodeURIComponent(getPublicUrl(slug))}`;
   const getEmbedCode = (slug: string) =>
     `<iframe src="${window.location.origin}/embed/forms/${slug}" width="100%" height="720" style="border:0;border-radius:8px;" title="FlowConnect intake form"></iframe>`;
 
@@ -171,6 +183,40 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
           <span>Success message</span>
           <input value={successMessage} onChange={(event) => setSuccessMessage(event.target.value)} />
         </label>
+        <label>
+          <span>Header image URL</span>
+          <input placeholder="https://example.com/header.jpg" value={headerImageUrl} onChange={(event) => setHeaderImageUrl(event.target.value)} />
+        </label>
+        <div className="grid two">
+          <label>
+            <span>Color theme</span>
+            <select value={theme} onChange={(event) => setTheme(event.target.value as IntakeForm["theme"])}>
+              {themes.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Font style</span>
+            <select value={fontStyle} onChange={(event) => setFontStyle(event.target.value as IntakeForm["fontStyle"])}>
+              {fontStyles.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className={`form-preview form-theme-${theme} form-font-${fontStyle}`}>
+          {headerImageUrl ? <img alt="" className="form-header-image" src={headerImageUrl} /> : null}
+          <h3>{name}</h3>
+          <p>{description}</p>
+          <button className="button primary" type="button">
+            Preview submit button
+          </button>
+        </div>
       </div>
 
       <section className="grid two">
@@ -226,6 +272,16 @@ export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[]
                   <span>Public URL</span>
                   <input readOnly value={getPublicUrl(form.slug)} />
                 </label>
+                <div className="qr-share">
+                  <img alt={`QR code for ${form.name}`} src={getQrUrl(form.slug)} />
+                  <div>
+                    <strong>QR code</strong>
+                    <p className="muted">Scan to open the public form.</p>
+                    <a className="button" href={getQrUrl(form.slug)} target="_blank" rel="noreferrer">
+                      Open QR
+                    </a>
+                  </div>
+                </div>
                 <label>
                   <span>Embed code</span>
                   <textarea readOnly rows={4} value={getEmbedCode(form.slug)} />

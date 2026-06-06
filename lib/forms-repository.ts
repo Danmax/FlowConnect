@@ -20,6 +20,9 @@ export type IntakeForm = {
   slug: string;
   description: string;
   successMessage: string;
+  headerImageUrl: string;
+  theme: "blue" | "emerald" | "rose" | "slate" | "amber";
+  fontStyle: "system" | "serif" | "mono" | "rounded";
   status: "draft" | "published" | "disabled";
   fields: IntakeField[];
 };
@@ -31,6 +34,9 @@ type FormRow = RowDataPacket & {
   slug: string;
   description: string | null;
   success_message: string;
+  header_image_url: string | null;
+  theme: IntakeForm["theme"] | null;
+  font_style: IntakeForm["fontStyle"] | null;
   status: IntakeForm["status"];
 };
 
@@ -79,12 +85,18 @@ export const createIntakeFormForUser = async ({
   name,
   description,
   successMessage,
+  headerImageUrl,
+  theme,
+  fontStyle,
   fields
 }: {
   userId: number;
   name: string;
   description: string;
   successMessage: string;
+  headerImageUrl: string;
+  theme: IntakeForm["theme"];
+  fontStyle: IntakeForm["fontStyle"];
   fields: IntakeField[];
 }) => {
   const connection = await db().getConnection();
@@ -94,9 +106,9 @@ export const createIntakeFormForUser = async ({
     await connection.beginTransaction();
 
     const [result] = await connection.execute<ResultSetHeader>(
-      `INSERT INTO forms (user_id, name, slug, description, success_message, status)
-       VALUES (:userId, :name, :slug, :description, :successMessage, 'published')`,
-      { userId, name, slug, description, successMessage }
+      `INSERT INTO forms (user_id, name, slug, description, success_message, header_image_url, theme, font_style, status)
+       VALUES (:userId, :name, :slug, :description, :successMessage, :headerImageUrl, :theme, :fontStyle, 'published')`,
+      { userId, name, slug, description, successMessage, headerImageUrl, theme, fontStyle }
     );
     const formId = result.insertId;
 
@@ -129,7 +141,7 @@ export const createIntakeFormForUser = async ({
 
 export const listIntakeFormsForUser = async (userId: number) => {
   const [rows] = await db().execute<FormRow[]>(
-    `SELECT id, user_id, name, slug, description, success_message, status
+    `SELECT id, user_id, name, slug, description, success_message, header_image_url, theme, font_style, status
      FROM forms
      WHERE user_id = :userId
      ORDER BY updated_at DESC`,
@@ -144,6 +156,9 @@ export const listIntakeFormsForUser = async (userId: number) => {
       slug: row.slug,
       description: row.description ?? "",
       successMessage: row.success_message,
+      headerImageUrl: row.header_image_url ?? "",
+      theme: row.theme ?? "blue",
+      fontStyle: row.font_style ?? "system",
       status: row.status,
       fields: await loadFields(row.id)
     }))
@@ -152,7 +167,7 @@ export const listIntakeFormsForUser = async (userId: number) => {
 
 export const getIntakeFormById = async (formId: number, userId: number) => {
   const [rows] = await db().execute<FormRow[]>(
-    `SELECT id, user_id, name, slug, description, success_message, status
+    `SELECT id, user_id, name, slug, description, success_message, header_image_url, theme, font_style, status
      FROM forms
      WHERE id = :formId AND user_id = :userId
      LIMIT 1`,
@@ -170,6 +185,9 @@ export const getIntakeFormById = async (formId: number, userId: number) => {
     slug: rows[0].slug,
     description: rows[0].description ?? "",
     successMessage: rows[0].success_message,
+    headerImageUrl: rows[0].header_image_url ?? "",
+    theme: rows[0].theme ?? "blue",
+    fontStyle: rows[0].font_style ?? "system",
     status: rows[0].status,
     fields: await loadFields(rows[0].id)
   };
@@ -177,7 +195,7 @@ export const getIntakeFormById = async (formId: number, userId: number) => {
 
 export const getPublishedIntakeFormBySlug = async (slug: string) => {
   const [rows] = await db().execute<FormRow[]>(
-    `SELECT id, user_id, name, slug, description, success_message, status
+    `SELECT id, user_id, name, slug, description, success_message, header_image_url, theme, font_style, status
      FROM forms
      WHERE slug = :slug AND status = 'published'
      LIMIT 1`,
@@ -195,6 +213,9 @@ export const getPublishedIntakeFormBySlug = async (slug: string) => {
     slug: rows[0].slug,
     description: rows[0].description ?? "",
     successMessage: rows[0].success_message,
+    headerImageUrl: rows[0].header_image_url ?? "",
+    theme: rows[0].theme ?? "blue",
+    fontStyle: rows[0].font_style ?? "system",
     status: rows[0].status,
     fields: await loadFields(rows[0].id)
   };

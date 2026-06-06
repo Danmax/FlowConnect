@@ -26,6 +26,9 @@ export async function POST(request: NextRequest) {
       name?: string;
       description?: string;
       successMessage?: string;
+      headerImageUrl?: string;
+      theme?: "blue" | "emerald" | "rose" | "slate" | "amber";
+      fontStyle?: "system" | "serif" | "mono" | "rounded";
       fields?: IntakeField[];
     };
 
@@ -38,6 +41,9 @@ export async function POST(request: NextRequest) {
       name: body.name,
       description: body.description ?? "",
       successMessage: body.successMessage ?? "Thanks. Your response was submitted.",
+      headerImageUrl: body.headerImageUrl ?? "",
+      theme: body.theme ?? "blue",
+      fontStyle: body.fontStyle ?? "system",
       fields: body.fields
     });
 

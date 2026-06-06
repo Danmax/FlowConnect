@@ -338,6 +338,91 @@ label {
   max-width: 720px;
 }
 
+.form-preview,
+.public-form {
+  border-color: var(--form-border, var(--border));
+}
+
+.form-header-image {
+  aspect-ratio: 16 / 7;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.form-preview {
+  background: var(--form-bg, #ffffff);
+  border: 1px solid var(--form-border, var(--border));
+  border-radius: 8px;
+  color: var(--form-text, var(--foreground));
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+}
+
+.form-theme-blue {
+  --form-bg: #eff6ff;
+  --form-border: #bfdbfe;
+  --form-text: #172554;
+}
+
+.form-theme-emerald {
+  --form-bg: #ecfdf5;
+  --form-border: #a7f3d0;
+  --form-text: #064e3b;
+}
+
+.form-theme-rose {
+  --form-bg: #fff1f2;
+  --form-border: #fecdd3;
+  --form-text: #881337;
+}
+
+.form-theme-slate {
+  --form-bg: #f8fafc;
+  --form-border: #cbd5e1;
+  --form-text: #0f172a;
+}
+
+.form-theme-amber {
+  --form-bg: #fffbeb;
+  --form-border: #fde68a;
+  --form-text: #78350f;
+}
+
+.form-font-system {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.form-font-serif {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.form-font-mono {
+  font-family: "Courier New", Courier, monospace;
+}
+
+.form-font-rounded {
+  font-family: "Trebuchet MS", Arial, sans-serif;
+}
+
+.qr-share {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  gap: 14px;
+  padding: 12px;
+}
+
+.qr-share img {
+  border-radius: 8px;
+  height: 112px;
+  width: 112px;
+}
+
 .embed-shell {
   padding: 0;
 }
