@@ -90,7 +90,7 @@ export const getTemplate = (id: string) => marketplaceTemplates.find((template) 
 export const cloneTemplateIntoWorkflow = (template: WorkflowTemplate, userId: string) => ({
   id: `workflow_${template.id}_${Date.now()}`,
   userId,
-  name: `${template.name} Copy`,
+  name: `${template.name} Draft`,
   sourceTemplateId: template.id,
   status: "draft",
   steps: template.flow.map((step, index) => ({

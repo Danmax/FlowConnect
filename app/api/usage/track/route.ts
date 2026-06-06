@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { trackDemoUsage } from "@/lib/usage-events";
+import { trackEmptyUsage } from "@/lib/usage-events";
+import { getRequestUserId } from "@/lib/request-user";
 import type { UsageMetric } from "@/lib/usage-billing";
 
 const usageMetrics: UsageMetric[] = [
@@ -13,6 +14,12 @@ const usageMetrics: UsageMetric[] = [
 ];
 
 export async function POST(request: NextRequest) {
+  const userId = getRequestUserId(request);
+
+  if (!userId) {
+    return NextResponse.json({ error: "Authenticated user id is required." }, { status: 401 });
+  }
+
   const body = (await request.json().catch(() => ({}))) as {
     metric?: UsageMetric;
     quantity?: number;
@@ -29,7 +36,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Quantity must be a positive integer." }, { status: 400 });
   }
 
-  const result = trackDemoUsage(body.metric, quantity, body.sourceId);
+  const result = trackEmptyUsage(userId, body.metric, quantity, body.sourceId);
 
   return NextResponse.json(result, { status: result.accepted ? 202 : 402 });
 }

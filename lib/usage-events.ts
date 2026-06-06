@@ -1,4 +1,4 @@
-import { demoUsage, getPlan, type UsageMetric, type UsageSnapshot } from "@/lib/usage-billing";
+import { emptyUsageSnapshot, getPlan, type UsageMetric, type UsageSnapshot } from "@/lib/usage-billing";
 
 export type UsageEvent = {
   id: string;
@@ -57,14 +57,23 @@ export const checkUsageLimit = (
   };
 };
 
-export const trackDemoUsage = (metric: UsageMetric, quantity = 1, sourceId?: string) => {
-  const event = createUsageEvent("demo-user", metric, quantity, sourceId);
-  const limitCheck = checkUsageLimit(demoUsage, metric, quantity);
+export const trackUsageAgainstSnapshot = (
+  userId: number,
+  usage: UsageSnapshot,
+  metric: UsageMetric,
+  quantity = 1,
+  sourceId?: string
+) => {
+  const event = createUsageEvent(String(userId), metric, quantity, sourceId);
+  const limitCheck = checkUsageLimit(usage, metric, quantity);
 
   return {
     accepted: limitCheck.allowed,
     event,
     limitCheck,
-    projectedUsage: limitCheck.allowed ? applyUsageEvent(demoUsage, event) : demoUsage
+    projectedUsage: limitCheck.allowed ? applyUsageEvent(usage, event) : usage
   };
 };
+
+export const trackEmptyUsage = (userId: number, metric: UsageMetric, quantity = 1, sourceId?: string) =>
+  trackUsageAgainstSnapshot(userId, emptyUsageSnapshot, metric, quantity, sourceId);

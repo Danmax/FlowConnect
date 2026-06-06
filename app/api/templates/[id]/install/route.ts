@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cloneTemplateIntoWorkflow, getTemplate } from "@/lib/marketplace";
+import { getRequestUserId } from "@/lib/request-user";
 
 type RouteContext = {
   params: Promise<{
@@ -8,6 +9,12 @@ type RouteContext = {
 };
 
 export async function POST(request: NextRequest, context: RouteContext) {
+  const userId = getRequestUserId(request);
+
+  if (!userId) {
+    return NextResponse.json({ error: "Authenticated user id is required." }, { status: 401 });
+  }
+
   const { id } = await context.params;
   const template = getTemplate(id);
 
@@ -15,8 +22,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "Template not found" }, { status: 404 });
   }
 
-  const userId = request.headers.get("x-flowconnect-user-id") ?? "demo-user";
-  const workflow = cloneTemplateIntoWorkflow(template, userId);
+  const workflow = cloneTemplateIntoWorkflow(template, String(userId));
 
   return NextResponse.json(
     {

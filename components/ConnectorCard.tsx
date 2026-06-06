@@ -1,23 +1,11 @@
-import { CloudCog, Github, PanelsTopLeft, Sheet, Youtube } from "lucide-react";
 import type { ConnectorDefinition } from "@/lib/connector-sdk";
-
-const icons = {
-  CloudCog,
-  Github,
-  PanelsTopLeft,
-  Sheet,
-  Youtube
-};
+import { BrandIcon } from "@/components/BrandIcon";
 
 export function ConnectorCard({ connector }: { connector: ConnectorDefinition }) {
-  const Icon = icons[connector.appIcon as keyof typeof icons] ?? CloudCog;
-
   return (
-    <article className="card">
-      <div style={{ alignItems: "center", display: "flex", gap: 12, marginBottom: 14 }}>
-        <span className="brand-mark">
-          <Icon size={22} aria-hidden="true" />
-        </span>
+    <article className="card connector-card">
+      <div className="connector-card-header">
+        <BrandIcon connector={connector} size="lg" />
         <div>
           <h3>{connector.appName}</h3>
           <span className="badge">{connector.category}</span>
@@ -30,18 +18,22 @@ export function ConnectorCard({ connector }: { connector: ConnectorDefinition })
       <p>
         <strong>Actions:</strong> {connector.availableActions.join(", ")}
       </p>
-      <p className="muted">Scopes: {connector.requiredScopes.join(", ")}</p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-        <form action={`/api/connectors/${connector.id}/test`} method="post">
-          <button className="button" type="submit">
-            Test connection
-          </button>
-        </form>
-        <form action={`/api/connectors/${connector.id}/refresh`} method="post">
-          <button className="button" type="submit">
-            Refresh token
-          </button>
-        </form>
+      <div className="button-row">
+        <a className="button" href={connector.authDocsUrl} target="_blank" rel="noreferrer">
+          Auth docs
+        </a>
+        <a className="button" href={connector.apiDocsUrl} target="_blank" rel="noreferrer">
+          API docs
+        </a>
+      </div>
+      <div className="action-catalog">
+        <strong>API action catalog</strong>
+        {connector.actionCatalog.map((action) => (
+          <a href={action.docsUrl} key={action.key} target="_blank" rel="noreferrer">
+            <span>{action.method}</span>
+            {action.label}
+          </a>
+        ))}
       </div>
     </article>
   );

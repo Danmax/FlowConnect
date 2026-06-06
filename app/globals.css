@@ -60,6 +60,24 @@ a {
   width: 40px;
 }
 
+.brand-icon {
+  align-items: center;
+  border-radius: 8px;
+  color: white;
+  display: inline-flex;
+  font-weight: 900;
+  height: 42px;
+  justify-content: center;
+  letter-spacing: 0;
+  width: 42px;
+}
+
+.brand-icon-lg {
+  font-size: 20px;
+  height: 58px;
+  width: 58px;
+}
+
 .nav-links {
   display: flex;
   flex-wrap: wrap;
@@ -84,9 +102,107 @@ a {
   color: white;
 }
 
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.big-button {
+  font-size: 17px;
+  justify-content: center;
+  min-height: 54px;
+  width: 100%;
+}
+
 button,
 input {
   font: inherit;
+}
+
+label {
+  display: grid;
+  font-weight: 800;
+  gap: 8px;
+}
+
+.connector-card,
+.connection-builder {
+  display: grid;
+  gap: 16px;
+}
+
+.connector-card-header {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.brand-button-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.brand-button {
+  align-items: center;
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  color: var(--foreground);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 900;
+  gap: 12px;
+  min-height: 82px;
+  padding: 12px;
+  text-align: left;
+}
+
+.brand-button-active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.connection-form {
+  display: grid;
+  gap: 14px;
+}
+
+.action-catalog {
+  display: grid;
+  gap: 8px;
+}
+
+.action-catalog a {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+}
+
+.action-catalog span {
+  background: #dbeafe;
+  border-radius: 6px;
+  color: #1e40af;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 4px 6px;
+}
+
+.form-error {
+  color: #b91c1c;
+  font-weight: 800;
+}
+
+.form-success {
+  color: #047857;
+  font-weight: 800;
 }
 
 button.button {
@@ -200,7 +316,8 @@ input {
 
   .hero,
   .grid.two,
-  .grid.three {
+  .grid.three,
+  .brand-button-grid {
     grid-template-columns: 1fr;
   }
 }

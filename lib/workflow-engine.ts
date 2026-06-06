@@ -1,6 +1,6 @@
 import { connectorRegistry } from "@/lib/connector-sdk";
 import { checkUsageLimit } from "@/lib/usage-events";
-import { demoUsage } from "@/lib/usage-billing";
+import { emptyUsageSnapshot, type UsageSnapshot } from "@/lib/usage-billing";
 
 export type WorkflowStepType = "trigger" | "transform" | "ai_action" | "function" | "connector_action" | "rest_api";
 
@@ -21,9 +21,9 @@ export type WorkflowDraft = {
   steps: WorkflowStep[];
 };
 
-export const validateWorkflowForActivation = (workflow: WorkflowDraft) => {
+export const validateWorkflowForActivation = (workflow: WorkflowDraft, usage: UsageSnapshot = emptyUsageSnapshot) => {
   const errors: string[] = [];
-  const runLimit = checkUsageLimit(demoUsage, "activeWorkflows", workflow.status === "active" ? 0 : 1);
+  const runLimit = checkUsageLimit(usage, "activeWorkflows", workflow.status === "active" ? 0 : 1);
 
   if (!workflow.steps.some((step) => step.type === "trigger")) {
     errors.push("Workflow needs one trigger step.");

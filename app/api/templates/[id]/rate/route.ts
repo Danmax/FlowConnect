@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTemplate } from "@/lib/marketplace";
+import { getRequestUserId } from "@/lib/request-user";
 
 type RouteContext = {
   params: Promise<{
@@ -8,6 +9,12 @@ type RouteContext = {
 };
 
 export async function POST(request: NextRequest, context: RouteContext) {
+  const userId = getRequestUserId(request);
+
+  if (!userId) {
+    return NextResponse.json({ error: "Authenticated user id is required." }, { status: 401 });
+  }
+
   const { id } = await context.params;
   const template = getTemplate(id);
 

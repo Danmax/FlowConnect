@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { demoUsage, getUsageSummary, pricingPlans } from "@/lib/usage-billing";
+import { emptyUsageSnapshot, getUsageSummary, pricingPlans } from "@/lib/usage-billing";
 
 export async function GET() {
   return NextResponse.json({
-    usage: demoUsage,
-    summary: getUsageSummary(demoUsage),
+    usage: emptyUsageSnapshot,
+    summary: getUsageSummary(emptyUsageSnapshot),
     pricingPlans
   });
 }

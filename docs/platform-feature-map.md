@@ -6,7 +6,7 @@ The connector SDK is centered on `ConnectorDefinition`.
 
 Each connector defines app name, icon, category, auth type, required scopes, triggers, actions, connection test, refresh token behavior, rate limit rules, and error handling rules. The starter registry includes ServiceNow, GitHub, Google Sheets, YouTube, and Wix.
 
-Runtime helpers in `connector-runtime.ts` adapt stored encrypted connections into connector contexts. Production code should replace the demo base64 secret provider with real encryption.
+Runtime helpers in `connector-runtime.ts` adapt stored encrypted connections into connector contexts. Credentials are encrypted with AES-256-GCM through `connection-secrets.ts`.
 
 ## Usage and Billing
 

@@ -37,6 +37,8 @@ Check database connectivity from the app:
 GET /api/health/db
 ```
 
+Connection credentials are encrypted with `CONNECTION_ENCRYPTION_KEY`; set this to a long random server-only secret before saving real connections.
+
 ## Implemented Feature Areas
 
 - Connector SDK with typed metadata, auth, scopes, triggers, actions, connection testing, token refresh, rate limits, and error handling.
@@ -51,11 +53,12 @@ GET /api/health/db
 
 - `lib/connector-sdk.ts`: Connector contract and starter connector registry.
 - `lib/connector-runtime.ts`: Stored connection runtime helpers for decrypting credentials, testing connections, and refreshing tokens.
-- `lib/usage-billing.ts`: Pricing tiers, usage metrics, demo usage snapshot, and summary calculations.
+- `lib/usage-billing.ts`: Pricing tiers, usage metrics, empty usage snapshot, and summary calculations.
 - `lib/usage-events.ts`: Usage event creation, plan limit checks, and projected usage rollups.
 - `lib/marketplace.ts`: Template definitions, search/filter helper, and clone helper.
 - `lib/workflow-engine.ts`: Workflow validation and run record creation.
 - `lib/db.ts`: MySQL pool configured from environment variables.
+- `lib/connection-secrets.ts`: AES-GCM encryption for saved connection credentials.
 - `sql/schema.sql`: MySQL schema for the new platform features.
 
 ## Adding a Connector
@@ -79,7 +82,7 @@ The core workflow engine should call connector definitions through the registry 
 
 ## Production Notes
 
-- Replace `demoSecretProvider` with envelope encryption backed by a server-only key management strategy.
+- Store `CONNECTION_ENCRYPTION_KEY` as a server-only secret and plan key rotation before production launch.
 - Persist usage events and monthly rollups in MySQL using `sql/schema.sql`.
 - Enqueue workflow runs into BullMQ after `createWorkflowRunRecord`.
 - Recalculate template ratings from `template_ratings` rather than trusting client-submitted aggregates.

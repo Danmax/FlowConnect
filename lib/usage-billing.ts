@@ -65,17 +65,17 @@ export const usageMetricLabels: Record<UsageMetric, string> = {
   storageMb: "Storage usage"
 };
 
-export const demoUsage: UsageSnapshot = {
+export const emptyUsageSnapshot: UsageSnapshot = {
   planId: "pro",
   periodStart: "2026-06-01",
   periodEnd: "2026-06-30",
-  workflowRuns: 1842,
-  apiCalls: 9321,
-  aiActionUsage: 412,
-  activeWorkflows: 11,
-  activeConnections: 14,
-  formSubmissions: 287,
-  storageMb: 742
+  workflowRuns: 0,
+  apiCalls: 0,
+  aiActionUsage: 0,
+  activeWorkflows: 0,
+  activeConnections: 0,
+  formSubmissions: 0,
+  storageMb: 0
 };
 
 export const getPlan = (id: PricingPlanId) => pricingPlans.find((plan) => plan.id === id) ?? pricingPlans[0];

@@ -1,4 +1,4 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   first_name VARCHAR(120) NOT NULL,
   last_name VARCHAR(120) NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE users (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE connection_types (
+CREATE TABLE IF NOT EXISTS connection_types (
   id VARCHAR(80) PRIMARY KEY,
   app_name VARCHAR(160) NOT NULL,
   app_icon VARCHAR(80) NOT NULL,
@@ -25,7 +25,27 @@ CREATE TABLE connection_types (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE connections (
+INSERT INTO connection_types
+  (id, app_name, app_icon, category, auth_type, required_scopes, available_triggers, available_actions, rate_limit_rules, error_handling_rules)
+VALUES
+  ('servicenow', 'ServiceNow', 'SN', 'ITSM', 'bearer_token', JSON_ARRAY('incident.write', 'case.write', 'user.read'), JSON_ARRAY('Incident Created', 'Incident Updated', 'Case Updated'), JSON_ARRAY('Create Incident', 'Update Incident', 'Create Case', 'Add Work Note'), JSON_ARRAY(JSON_OBJECT('window', 'minute', 'maxRequests', 120, 'strategy', 'queue')), JSON_OBJECT('retryableStatuses', JSON_ARRAY(429, 500, 502, 503, 504), 'maxRetries', 4, 'backoff', 'exponential', 'fallbackAction', 'send_to_dead_letter')),
+  ('github', 'GitHub', 'GH', 'Developer', 'bearer_token', JSON_ARRAY('repo', 'read:user', 'issues:write'), JSON_ARRAY('Issue Opened', 'Issue Labeled', 'Pull Request Ready'), JSON_ARRAY('Create Issue', 'Add Comment', 'Apply Label', 'Dispatch Workflow'), JSON_ARRAY(JSON_OBJECT('window', 'hour', 'maxRequests', 5000, 'strategy', 'throttle')), JSON_OBJECT('retryableStatuses', JSON_ARRAY(403, 429, 500, 502, 503, 504), 'maxRetries', 3, 'backoff', 'exponential', 'fallbackAction', 'mark_failed')),
+  ('google-sheets', 'Google Sheets', 'G', 'Google', 'oauth2', JSON_ARRAY('https://www.googleapis.com/auth/spreadsheets'), JSON_ARRAY('New Row', 'Updated Row'), JSON_ARRAY('Append Row', 'Update Row', 'Find Row', 'Create Sheet'), JSON_ARRAY(JSON_OBJECT('window', 'minute', 'maxRequests', 300, 'strategy', 'queue')), JSON_OBJECT('retryableStatuses', JSON_ARRAY(429, 500, 502, 503), 'maxRetries', 5, 'backoff', 'exponential', 'fallbackAction', 'send_to_dead_letter')),
+  ('youtube', 'YouTube', 'YT', 'Video', 'oauth2', JSON_ARRAY('https://www.googleapis.com/auth/youtube.readonly'), JSON_ARRAY('Video Uploaded', 'Comment Added', 'Channel Updated'), JSON_ARRAY('Get Video', 'List Channel Videos', 'Fetch Captions'), JSON_ARRAY(JSON_OBJECT('window', 'day', 'maxRequests', 10000, 'strategy', 'throttle')), JSON_OBJECT('retryableStatuses', JSON_ARRAY(403, 429, 500, 503), 'maxRetries', 3, 'backoff', 'fixed', 'fallbackAction', 'skip_step')),
+  ('wix', 'Wix', 'W', 'Website', 'oauth2', JSON_ARRAY('forms.read', 'contacts.write', 'sites.read'), JSON_ARRAY('Form Submitted', 'Contact Created', 'Order Created'), JSON_ARRAY('Create Contact', 'Update Contact', 'Get Form Submission'), JSON_ARRAY(JSON_OBJECT('window', 'minute', 'maxRequests', 200, 'strategy', 'queue')), JSON_OBJECT('retryableStatuses', JSON_ARRAY(408, 429, 500, 502, 503, 504), 'maxRetries', 4, 'backoff', 'exponential', 'fallbackAction', 'mark_failed')),
+  ('instagram', 'Instagram', 'IG', 'Social', 'oauth2', JSON_ARRAY('instagram_basic', 'instagram_content_publish', 'pages_show_list'), JSON_ARRAY('Media Published', 'Comment Added'), JSON_ARRAY('Create Media Container', 'Publish Media', 'Reply To Comment'), JSON_ARRAY(JSON_OBJECT('window', 'hour', 'maxRequests', 200, 'strategy', 'throttle')), JSON_OBJECT('retryableStatuses', JSON_ARRAY(4, 17, 32, 613), 'maxRetries', 3, 'backoff', 'exponential', 'fallbackAction', 'mark_failed'))
+ON DUPLICATE KEY UPDATE
+  app_name = VALUES(app_name),
+  app_icon = VALUES(app_icon),
+  category = VALUES(category),
+  auth_type = VALUES(auth_type),
+  required_scopes = VALUES(required_scopes),
+  available_triggers = VALUES(available_triggers),
+  available_actions = VALUES(available_actions),
+  rate_limit_rules = VALUES(rate_limit_rules),
+  error_handling_rules = VALUES(error_handling_rules);
+
+CREATE TABLE IF NOT EXISTS connections (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NOT NULL,
   connection_type_id VARCHAR(80) NOT NULL,
@@ -41,7 +61,7 @@ CREATE TABLE connections (
   FOREIGN KEY (connection_type_id) REFERENCES connection_types(id)
 );
 
-CREATE TABLE workflows (
+CREATE TABLE IF NOT EXISTS workflows (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NOT NULL,
   name VARCHAR(180) NOT NULL,
@@ -52,7 +72,7 @@ CREATE TABLE workflows (
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE workflow_versions (
+CREATE TABLE IF NOT EXISTS workflow_versions (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   workflow_id BIGINT UNSIGNED NOT NULL,
   version_number INT UNSIGNED NOT NULL,
@@ -62,7 +82,7 @@ CREATE TABLE workflow_versions (
   UNIQUE KEY workflow_version_unique (workflow_id, version_number)
 );
 
-CREATE TABLE workflow_steps (
+CREATE TABLE IF NOT EXISTS workflow_steps (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   workflow_id BIGINT UNSIGNED NOT NULL,
   step_type ENUM('trigger', 'transform', 'ai_action', 'function', 'connector_action', 'rest_api') NOT NULL,
@@ -75,7 +95,7 @@ CREATE TABLE workflow_steps (
   FOREIGN KEY (connector_type_id) REFERENCES connection_types(id)
 );
 
-CREATE TABLE workflow_runs (
+CREATE TABLE IF NOT EXISTS workflow_runs (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   workflow_id BIGINT UNSIGNED NOT NULL,
   user_id BIGINT UNSIGNED NOT NULL,
@@ -90,7 +110,7 @@ CREATE TABLE workflow_runs (
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE workflow_logs (
+CREATE TABLE IF NOT EXISTS workflow_logs (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   workflow_run_id BIGINT UNSIGNED NOT NULL,
   step_id BIGINT UNSIGNED NULL,
@@ -104,7 +124,7 @@ CREATE TABLE workflow_logs (
   FOREIGN KEY (step_id) REFERENCES workflow_steps(id)
 );
 
-CREATE TABLE usage_events (
+CREATE TABLE IF NOT EXISTS usage_events (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NOT NULL,
   metric ENUM('workflowRuns', 'apiCalls', 'aiActionUsage', 'activeWorkflows', 'activeConnections', 'formSubmissions', 'storageMb') NOT NULL,
@@ -115,7 +135,7 @@ CREATE TABLE usage_events (
   INDEX usage_events_user_period (user_id, occurred_at)
 );
 
-CREATE TABLE usage_monthly_rollups (
+CREATE TABLE IF NOT EXISTS usage_monthly_rollups (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NOT NULL,
   period_start DATE NOT NULL,
@@ -131,7 +151,7 @@ CREATE TABLE usage_monthly_rollups (
   UNIQUE KEY usage_rollup_unique (user_id, period_start)
 );
 
-CREATE TABLE templates (
+CREATE TABLE IF NOT EXISTS templates (
   id VARCHAR(120) PRIMARY KEY,
   name VARCHAR(180) NOT NULL,
   description TEXT NOT NULL,
@@ -144,7 +164,7 @@ CREATE TABLE templates (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE template_ratings (
+CREATE TABLE IF NOT EXISTS template_ratings (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   template_id VARCHAR(120) NOT NULL,
   user_id BIGINT UNSIGNED NOT NULL,

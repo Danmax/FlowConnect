@@ -1,4 +1,4 @@
-import { demoUsage, getUsageSummary, usageMetricLabels } from "@/lib/usage-billing";
+import { emptyUsageSnapshot, getUsageSummary, usageMetricLabels } from "@/lib/usage-billing";
 
 const trackedMetrics = [
   "workflowRuns",
@@ -11,7 +11,7 @@ const trackedMetrics = [
 ] as const;
 
 export function UsageDashboard() {
-  const summary = getUsageSummary(demoUsage);
+  const summary = getUsageSummary(emptyUsageSnapshot);
 
   return (
     <section className="grid two">
@@ -19,7 +19,7 @@ export function UsageDashboard() {
         <span className="badge">Current plan</span>
         <h1>{summary.plan.name}</h1>
         <p className="lead">
-          {demoUsage.periodStart} through {demoUsage.periodEnd}
+          {emptyUsageSnapshot.periodStart} through {emptyUsageSnapshot.periodEnd}
         </p>
         <h2>
           {summary.remainingWorkflowRuns === null ? "Custom" : summary.remainingWorkflowRuns.toLocaleString()} workflow
@@ -28,7 +28,7 @@ export function UsageDashboard() {
         <div className="usage-bar" aria-label="Workflow run usage">
           <span style={{ width: `${summary.workflowRunPercent}%` }} />
         </div>
-        <p className="muted">{demoUsage.workflowRuns.toLocaleString()} runs used this month</p>
+        <p className="muted">{emptyUsageSnapshot.workflowRuns.toLocaleString()} runs used this month</p>
         {summary.isNearLimit ? <p className="badge">Approaching plan limit</p> : null}
         <a className="button primary" href="#upgrade">
           Upgrade plan
@@ -42,7 +42,7 @@ export function UsageDashboard() {
             <div className="card" key={metric}>
               <strong>{usageMetricLabels[metric]}</strong>
               <p className="lead" style={{ margin: "8px 0 0" }}>
-                {metric === "storageMb" ? `${demoUsage[metric]} MB` : demoUsage[metric].toLocaleString()}
+                {metric === "storageMb" ? `${emptyUsageSnapshot[metric]} MB` : emptyUsageSnapshot[metric].toLocaleString()}
               </p>
             </div>
           ))}
