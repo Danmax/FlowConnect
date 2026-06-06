@@ -338,6 +338,18 @@ label {
   max-width: 720px;
 }
 
+.embed-shell {
+  padding: 0;
+}
+
+.embedded-public-form {
+  background: white;
+  margin: 0;
+  max-width: none;
+  min-height: 100vh;
+  padding: 22px;
+}
+
 button.button {
   cursor: pointer;
 }

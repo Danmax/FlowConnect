@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { IntakeForm } from "@/lib/forms-repository";
 
-export function PublicIntakeForm({ form }: { form: IntakeForm }) {
+export function PublicIntakeForm({ form, embedded = false }: { form: IntakeForm; embedded?: boolean }) {
   const [message, setMessage] = useState<string | null>(null);
 
   const submit = async (formData: FormData) => {
@@ -19,8 +19,8 @@ export function PublicIntakeForm({ form }: { form: IntakeForm }) {
   };
 
   return (
-    <main className="shell">
-      <section className="panel public-form">
+    <main className={embedded ? "embed-shell" : "shell"}>
+      <section className={embedded ? "public-form embedded-public-form" : "panel public-form"}>
         <span className="badge">FlowConnect Intake</span>
         <h1>{form.name}</h1>
         <p className="lead">{form.description}</p>

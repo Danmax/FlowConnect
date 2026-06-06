@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { IntakeField } from "@/lib/forms-repository";
+import type { IntakeField, IntakeForm } from "@/lib/forms-repository";
 
 const fieldTypes: IntakeField["fieldType"][] = ["text", "email", "number", "textarea", "dropdown", "checkbox", "date"];
 
-export function IntakeFormBuilder() {
+export function IntakeFormBuilder({ initialForms }: { initialForms: IntakeForm[] }) {
   const [name, setName] = useState("New intake form");
   const [description, setDescription] = useState("Collect the data needed to start a workflow.");
   const [successMessage, setSuccessMessage] = useState("Thanks. Your response was submitted.");
@@ -14,6 +14,7 @@ export function IntakeFormBuilder() {
     { label: "Message", fieldKey: "message", fieldType: "textarea", required: true, position: 2 }
   ]);
   const [message, setMessage] = useState<string | null>(null);
+  const [forms, setForms] = useState(initialForms);
 
   const updateField = (index: number, update: Partial<IntakeField>) => {
     setFields((current) => current.map((field, fieldIndex) => (fieldIndex === index ? { ...field, ...update } : field)));
@@ -47,7 +48,7 @@ export function IntakeFormBuilder() {
       })
     });
     const payload = (await response.json().catch(() => ({}))) as {
-      form?: { slug: string };
+      form?: IntakeForm;
       error?: string;
     };
 
@@ -56,8 +57,13 @@ export function IntakeFormBuilder() {
       return;
     }
 
+    setForms((current) => [payload.form as IntakeForm, ...current]);
     setMessage(`Form published: /f/${payload.form.slug}`);
   };
+
+  const getPublicUrl = (slug: string) => `${window.location.origin}/f/${slug}`;
+  const getEmbedCode = (slug: string) =>
+    `<iframe src="${window.location.origin}/embed/forms/${slug}" width="100%" height="720" style="border:0;border-radius:8px;" title="FlowConnect intake form"></iframe>`;
 
   return (
     <section className="workflow-builder">
@@ -124,6 +130,47 @@ export function IntakeFormBuilder() {
         Add field
       </button>
       {message ? <p className={message.includes("published") ? "form-success" : "form-error"}>{message}</p> : null}
+
+      <section className="section">
+        <h2>Published forms</h2>
+        <div className="grid two">
+          {forms.length > 0 ? (
+            forms.map((form) => (
+              <article className="card connection-form" key={form.id}>
+                <div>
+                  <span className="badge">{form.status}</span>
+                  <h3>{form.name}</h3>
+                  <p className="muted">{form.description}</p>
+                </div>
+                <label>
+                  <span>Public URL</span>
+                  <input readOnly value={getPublicUrl(form.slug)} />
+                </label>
+                <label>
+                  <span>Embed code</span>
+                  <textarea readOnly rows={4} value={getEmbedCode(form.slug)} />
+                </label>
+                <div className="button-row">
+                  <a className="button primary" href={`/f/${form.slug}`} target="_blank" rel="noreferrer">
+                    Preview
+                  </a>
+                  <button className="button" onClick={() => navigator.clipboard?.writeText(getPublicUrl(form.slug))} type="button">
+                    Copy URL
+                  </button>
+                  <button className="button" onClick={() => navigator.clipboard?.writeText(getEmbedCode(form.slug))} type="button">
+                    Copy embed
+                  </button>
+                </div>
+              </article>
+            ))
+          ) : (
+            <article className="card">
+              <h3>No forms yet</h3>
+              <p className="muted">Create and save a form to get a public URL and embed code.</p>
+            </article>
+          )}
+        </div>
+      </section>
     </section>
   );
 }
