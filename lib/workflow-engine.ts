@@ -1,4 +1,5 @@
 import { connectorRegistry } from "@/lib/connector-sdk";
+import { validateDataPillReferences } from "@/lib/dot-walk";
 import { checkUsageLimit } from "@/lib/usage-events";
 import { emptyUsageSnapshot, type UsageSnapshot } from "@/lib/usage-billing";
 
@@ -10,6 +11,8 @@ export type WorkflowStep = {
   name: string;
   connectorId?: string;
   action?: string;
+  inputBindings?: Record<string, string>;
+  outputFields?: string[];
   config: Record<string, unknown>;
 };
 
@@ -18,6 +21,7 @@ export type WorkflowDraft = {
   userId: string;
   name: string;
   status: "draft" | "active" | "inactive";
+  sourceTemplateId?: string;
   steps: WorkflowStep[];
 };
 
@@ -29,8 +33,17 @@ export const validateWorkflowForActivation = (workflow: WorkflowDraft, usage: Us
     errors.push("Workflow needs one trigger step.");
   }
 
+  const availablePaths = new Set<string>();
+
   workflow.steps.forEach((step) => {
+    Object.entries(step.inputBindings ?? {}).forEach(([field, value]) => {
+      validateDataPillReferences(value, availablePaths).forEach((error) => {
+        errors.push(`${step.name} ${field}: ${error}`);
+      });
+    });
+
     if (!step.connectorId) {
+      step.outputFields?.forEach((field) => availablePaths.add(`${step.id}.${field}`));
       return;
     }
 
@@ -44,6 +57,8 @@ export const validateWorkflowForActivation = (workflow: WorkflowDraft, usage: Us
     if (step.action && !connector.availableActions.includes(step.action)) {
       errors.push(`${step.action} is not available on ${connector.appName}.`);
     }
+
+    step.outputFields?.forEach((field) => availablePaths.add(`${step.id}.${field}`));
   });
 
   if (!runLimit.allowed) {

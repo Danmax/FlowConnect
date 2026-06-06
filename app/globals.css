@@ -120,6 +120,20 @@ input {
   font: inherit;
 }
 
+select,
+textarea {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  min-height: 46px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+textarea {
+  resize: vertical;
+}
+
 label {
   display: grid;
   font-weight: 800;
@@ -224,6 +238,67 @@ label {
   gap: 18px;
   justify-content: space-between;
   margin-bottom: 22px;
+}
+
+.workflow-builder {
+  display: grid;
+  gap: 18px;
+}
+
+.workflow-toolbar,
+.step-header,
+.connector-mini {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.workflow-toolbar,
+.step-header {
+  justify-content: space-between;
+}
+
+.workflow-layout {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.workflow-steps,
+.workflow-step,
+.data-pill-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.step-number {
+  align-items: center;
+  background: #dbeafe;
+  border-radius: 999px;
+  color: #1e40af;
+  display: inline-flex;
+  font-weight: 900;
+  height: 42px;
+  justify-content: center;
+  min-width: 42px;
+}
+
+.data-pill {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: 4px;
+  padding: 10px;
+  text-align: left;
+}
+
+.data-pill code {
+  color: #1d4ed8;
+  white-space: normal;
 }
 
 button.button {
@@ -337,6 +412,7 @@ input {
 
   .hero,
   .auth-layout,
+  .workflow-layout,
   .grid.two,
   .grid.three,
   .brand-button-grid {

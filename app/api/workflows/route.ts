@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createWorkflowRunRecord, validateWorkflowForActivation, type WorkflowDraft } from "@/lib/workflow-engine";
 import { getRequestUserId } from "@/lib/request-user";
+import { saveWorkflowDraftForUser } from "@/lib/workflow-repository";
 
 export async function POST(request: NextRequest) {
   const userId = await getRequestUserId(request);
@@ -17,15 +18,29 @@ export async function POST(request: NextRequest) {
     userId: String(userId),
     name: body.name ?? "Untitled workflow",
     status: body.status ?? "draft",
+    sourceTemplateId: body.sourceTemplateId,
     steps: body.steps ?? []
   };
   const validation = validateWorkflowForActivation(workflow);
   const run = createWorkflowRunRecord(workflow, body.triggerData ?? {});
 
+  if (!validation.valid) {
+    return NextResponse.json(
+      {
+        message: "Workflow draft has validation errors.",
+        workflow,
+        validation
+      },
+      { status: 400 }
+    );
+  }
+
+  const savedWorkflow = await saveWorkflowDraftForUser(workflow);
+
   return NextResponse.json(
     {
-      message: "Workflow draft created. Persist this payload to MySQL and enqueue the run in BullMQ in production.",
-      workflow,
+      message: "Workflow draft saved.",
+      workflow: savedWorkflow,
       validation,
       run
     },

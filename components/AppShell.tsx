@@ -4,6 +4,7 @@ import { Workflow } from "lucide-react";
 const navItems = [
   ["Dashboard", "/"],
   ["Profile", "/profile"],
+  ["Workflows", "/workflows"],
   ["Connectors", "/connectors"],
   ["Usage", "/usage"],
   ["Templates", "/templates"]
