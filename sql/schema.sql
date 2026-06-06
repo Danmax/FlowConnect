@@ -135,6 +135,44 @@ CREATE TABLE IF NOT EXISTS workflow_logs (
   FOREIGN KEY (step_id) REFERENCES workflow_steps(id)
 );
 
+CREATE TABLE IF NOT EXISTS forms (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT UNSIGNED NOT NULL,
+  name VARCHAR(180) NOT NULL,
+  slug VARCHAR(120) NOT NULL UNIQUE,
+  description TEXT NULL,
+  success_message VARCHAR(255) NOT NULL DEFAULT 'Thanks. Your response was submitted.',
+  status ENUM('draft', 'published', 'disabled') NOT NULL DEFAULT 'draft',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS form_fields (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  form_id BIGINT UNSIGNED NOT NULL,
+  label VARCHAR(160) NOT NULL,
+  field_key VARCHAR(120) NOT NULL,
+  field_type ENUM('text', 'email', 'number', 'textarea', 'dropdown', 'checkbox', 'date') NOT NULL,
+  is_required BOOLEAN NOT NULL DEFAULT FALSE,
+  options JSON NULL,
+  position INT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (form_id) REFERENCES forms(id),
+  UNIQUE KEY form_field_key_unique (form_id, field_key)
+);
+
+CREATE TABLE IF NOT EXISTS form_submissions (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  form_id BIGINT UNSIGNED NOT NULL,
+  payload JSON NOT NULL,
+  trigger_data JSON NOT NULL,
+  request_meta JSON NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (form_id) REFERENCES forms(id),
+  INDEX form_submissions_form_created (form_id, created_at)
+);
+
 CREATE TABLE IF NOT EXISTS usage_events (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NOT NULL,

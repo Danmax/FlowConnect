@@ -1,4 +1,5 @@
 import type { WorkflowTemplate } from "@/lib/marketplace";
+import { InstallTemplateButton } from "@/components/InstallTemplateButton";
 
 export function TemplateCard({ template }: { template: WorkflowTemplate }) {
   return (
@@ -13,11 +14,7 @@ export function TemplateCard({ template }: { template: WorkflowTemplate }) {
       <p className="muted">
         Apps: {template.apps.join(", ")} | Rating: {template.rating} | Installs: {template.installs.toLocaleString()}
       </p>
-      <form action={`/api/templates/${template.id}/install`} method="post">
-        <button className="button primary" type="submit">
-          Install template
-        </button>
-      </form>
+      <InstallTemplateButton templateId={template.id} />
     </article>
   );
 }

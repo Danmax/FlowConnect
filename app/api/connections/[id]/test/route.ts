@@ -10,27 +10,37 @@ type RouteContext = {
 };
 
 export async function POST(request: NextRequest, context: RouteContext) {
-  const userId = await getRequestUserId(request);
+  try {
+    const userId = await getRequestUserId(request);
 
-  if (!userId) {
-    return NextResponse.json({ error: "Authenticated user id is required." }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: "Authenticated user id is required." }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+    const connectionId = Number(id);
+
+    if (!Number.isInteger(connectionId)) {
+      return NextResponse.json({ error: "Connection id must be numeric." }, { status: 400 });
+    }
+
+    const connection = await getConnectionForUser(connectionId, userId);
+
+    if (!connection) {
+      return NextResponse.json({ error: "Connection not found." }, { status: 404 });
+    }
+
+    const result = await testStoredConnection(connection);
+    await updateConnectionHealth(connection.id, userId, result.ok ? "healthy" : "unhealthy");
+
+    return NextResponse.json({ connectionId, result });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: "Connection test failed.",
+        detail: error instanceof Error ? error.message : "Unknown connection test error."
+      },
+      { status: 500 }
+    );
   }
-
-  const { id } = await context.params;
-  const connectionId = Number(id);
-
-  if (!Number.isInteger(connectionId)) {
-    return NextResponse.json({ error: "Connection id must be numeric." }, { status: 400 });
-  }
-
-  const connection = await getConnectionForUser(connectionId, userId);
-
-  if (!connection) {
-    return NextResponse.json({ error: "Connection not found." }, { status: 404 });
-  }
-
-  const result = await testStoredConnection(connection);
-  await updateConnectionHealth(connection.id, userId, result.ok ? "healthy" : "unhealthy");
-
-  return NextResponse.json({ connectionId, result });
 }

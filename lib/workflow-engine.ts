@@ -54,7 +54,11 @@ export const validateWorkflowForActivation = (workflow: WorkflowDraft, usage: Us
       return;
     }
 
-    if (step.action && !connector.availableActions.includes(step.action)) {
+    if (step.type === "trigger" && step.action && !connector.availableTriggers.includes(step.action)) {
+      errors.push(`${step.action} is not available as a trigger on ${connector.appName}.`);
+    }
+
+    if (step.type === "connector_action" && step.action && !connector.availableActions.includes(step.action)) {
       errors.push(`${step.action} is not available on ${connector.appName}.`);
     }
 

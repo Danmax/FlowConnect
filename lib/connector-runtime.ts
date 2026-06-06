@@ -30,7 +30,15 @@ export const testStoredConnection = async (connection: StoredConnection) => {
     };
   }
 
-  return connector.testConnection(await createConnectorContext(connection));
+  try {
+    return await connector.testConnection(await createConnectorContext(connection));
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Connection test failed.",
+      checkedAt: new Date().toISOString()
+    };
+  }
 };
 
 export const refreshStoredConnectionToken = async (connection: StoredConnection) => {

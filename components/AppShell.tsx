@@ -6,6 +6,7 @@ const navItems = [
   ["Profile", "/profile"],
   ["Workflows", "/workflows"],
   ["Connectors", "/connectors"],
+  ["Forms", "/forms"],
   ["Usage", "/usage"],
   ["Templates", "/templates"]
 ];

@@ -219,6 +219,11 @@ label {
   font-weight: 800;
 }
 
+.install-template {
+  display: grid;
+  gap: 8px;
+}
+
 .auth-layout {
   align-items: start;
   display: grid;
@@ -299,6 +304,22 @@ label {
 .data-pill code {
   color: #1d4ed8;
   white-space: normal;
+}
+
+.checkbox-label {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.checkbox-label input {
+  min-height: auto;
+  width: auto;
+}
+
+.public-form {
+  margin: 48px auto;
+  max-width: 720px;
 }
 
 button.button {
