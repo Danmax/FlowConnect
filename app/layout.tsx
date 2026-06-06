@@ -5,7 +5,8 @@ export const metadata: Metadata = {
   title: "FlowConnect AI",
   description: "Workflow automation with connectors, AI actions, hosted forms, and templates.",
   icons: {
-    icon: "/icon.svg"
+    icon: "/icon.png",
+    apple: "/apple-icon.png"
   }
 };
 
