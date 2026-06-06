@@ -205,6 +205,27 @@ label {
   font-weight: 800;
 }
 
+.auth-layout {
+  align-items: start;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.75fr);
+}
+
+.auth-form {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-header,
+.section-heading {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
 button.button {
   cursor: pointer;
 }
@@ -315,6 +336,7 @@ input {
   }
 
   .hero,
+  .auth-layout,
   .grid.two,
   .grid.three,
   .brand-button-grid {

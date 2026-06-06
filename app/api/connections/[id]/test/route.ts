@@ -10,7 +10,7 @@ type RouteContext = {
 };
 
 export async function POST(request: NextRequest, context: RouteContext) {
-  const userId = getRequestUserId(request);
+  const userId = await getRequestUserId(request);
 
   if (!userId) {
     return NextResponse.json({ error: "Authenticated user id is required." }, { status: 401 });

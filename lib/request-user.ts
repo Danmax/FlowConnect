@@ -1,12 +1,12 @@
 import type { NextRequest } from "next/server";
+import { getUserFromRequest } from "@/lib/auth";
 
-export const getRequestUserId = (request: NextRequest) => {
-  const rawUserId = request.headers.get("x-flowconnect-user-id");
-  const userId = Number(rawUserId);
+export const getRequestUserId = async (request: NextRequest) => {
+  const user = await getUserFromRequest(request);
 
-  if (!Number.isInteger(userId) || userId < 1) {
+  if (!user) {
     return null;
   }
 
-  return userId;
+  return user.id;
 };

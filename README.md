@@ -40,6 +40,7 @@ Connection credentials are encrypted with a server-only encryption key. Set all 
 - Usage and billing engine with Starter, Pro, and Enterprise plan definitions.
 - Usage dashboard for current plan, monthly usage, remaining workflow runs, and upgrade CTA.
 - Workflow marketplace with browse, search, app/category filters, install/clone, ratings, official templates, and five starter templates.
+- User signup, login, logout, profile, and HTTP-only session cookies.
 - API routes for connector registry, connector health tests, token refresh, usage tracking, template install/rating, and workflow draft/run creation.
 - MySQL schema for users, connectors, workflows, runs, logs, usage events, usage rollups, templates, and template ratings.
 
@@ -53,6 +54,7 @@ Connection credentials are encrypted with a server-only encryption key. Set all 
 - `lib/workflow-engine.ts`: Workflow validation and run record creation.
 - `lib/db.ts`: MySQL pool configured from environment variables.
 - `lib/connection-secrets.ts`: AES-GCM encryption for saved connection credentials.
+- `lib/auth.ts`: User signup/login/session helpers.
 - `sql/schema.sql`: MySQL schema for the new platform features.
 
 ## Adding a Connector

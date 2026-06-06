@@ -3,7 +3,7 @@ import { createWorkflowRunRecord, validateWorkflowForActivation, type WorkflowDr
 import { getRequestUserId } from "@/lib/request-user";
 
 export async function POST(request: NextRequest) {
-  const userId = getRequestUserId(request);
+  const userId = await getRequestUserId(request);
 
   if (!userId) {
     return NextResponse.json({ error: "Authenticated user id is required." }, { status: 401 });

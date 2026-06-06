@@ -2,7 +2,7 @@
 
 ## Current State
 
-The app now requires explicit user context for write APIs through `x-flowconnect-user-id`. This removes demo-user fallbacks, but it is not a complete authentication system yet.
+The app supports credential signup and login with password hashing, HTTP-only session cookies, logout, and a profile page.
 
 Current protected flows:
 
@@ -13,21 +13,20 @@ Current protected flows:
 - `POST /api/workflows`
 - `POST /api/templates/{id}/install`
 
-## Required Production Auth Flow
+## Implemented Auth Flow
 
-1. User signs up with first name, last name, email, password, and role.
-2. Password is hashed with bcrypt or Argon2 before storage.
-3. Email verification sets `users.email_verified_at`.
-4. Login creates a secure HTTP-only session.
-5. API routes read the authenticated session server-side and derive `user.id`.
-6. Role checks gate admin and builder actions.
-7. Password reset sends a signed, expiring reset token.
+1. User signs up with first name, last name, email, and password.
+2. Password is hashed with PBKDF2-SHA256 before storage.
+3. Login creates an opaque session token.
+4. Only the token hash is stored in `user_sessions`.
+5. The raw session token is stored in an HTTP-only same-site cookie.
+6. Protected API routes derive `user.id` from the session cookie.
 
-## Immediate Gaps
+## Production Hardening Still Needed
 
-- Replace `x-flowconnect-user-id` with server-side session lookup.
 - Add CSRF protection for cookie-authenticated form posts.
-- Add password hashing and reset token tables.
+- Add reset token tables.
+- Add email verification delivery.
 - Add route-level RBAC checks.
 - Add audit logs for connection create/test and workflow activation.
 

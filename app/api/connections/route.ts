@@ -7,7 +7,7 @@ import {
 import { getRequestUserId } from "@/lib/request-user";
 
 export async function GET(request: NextRequest) {
-  const userId = getRequestUserId(request);
+  const userId = await getRequestUserId(request);
 
   if (!userId) {
     return NextResponse.json({ error: "Authenticated user id is required." }, { status: 401 });
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const userId = getRequestUserId(request);
+  const userId = await getRequestUserId(request);
 
   if (!userId) {
     return NextResponse.json({ error: "Authenticated user id is required." }, { status: 401 });

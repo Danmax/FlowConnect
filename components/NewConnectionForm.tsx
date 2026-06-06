@@ -34,8 +34,7 @@ export function NewConnectionForm({ connectors }: { connectors: ClientConnector[
     const response = await fetch("/api/connections", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "x-flowconnect-user-id": String(formData.get("userId") ?? "")
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         connectorId: selectedConnector.id,
@@ -66,10 +65,7 @@ export function NewConnectionForm({ connectors }: { connectors: ClientConnector[
     }
 
     const response = await fetch(`/api/connections/${connectionId}/test`, {
-      method: "POST",
-      headers: {
-        "x-flowconnect-user-id": String(formData.get("userId") ?? "")
-      }
+      method: "POST"
     });
     const payload = (await response.json()) as { result?: { ok: boolean; message: string }; error?: string };
 
@@ -105,7 +101,6 @@ export function NewConnectionForm({ connectors }: { connectors: ClientConnector[
       </div>
 
       <form action={saveConnection} className="connection-form">
-        <input name="userId" placeholder="User ID from authenticated session" required type="number" min="1" />
         <input name="displayName" placeholder={`${selectedConnector.appName} connection name`} />
         {selectedConnector.credentialFields.map((field) => (
           <label key={field.key}>
@@ -124,7 +119,6 @@ export function NewConnectionForm({ connectors }: { connectors: ClientConnector[
       </form>
 
       <form action={testConnection}>
-        <input name="userId" placeholder="User ID" required type="number" min="1" />
         <button className="button big-button" disabled={!saveState.connectionId} type="submit">
           Test saved connection
         </button>
