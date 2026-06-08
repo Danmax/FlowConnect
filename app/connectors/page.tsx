@@ -2,12 +2,15 @@ import { AppShell } from "@/components/AppShell";
 import { ConnectionSetupAssistant } from "@/components/ConnectionSetupAssistant";
 import { ConnectorCard } from "@/components/ConnectorCard";
 import { NewConnectionForm } from "@/components/NewConnectionForm";
+import { SavedConnectionsList } from "@/components/SavedConnectionsList";
+import { listConnectionsForUser, toSafeConnection } from "@/lib/connection-repository";
 import { connectorRegistry } from "@/lib/connector-sdk";
 import { requireCurrentUser } from "@/lib/require-auth";
 
 export default async function ConnectorsPage() {
-  await requireCurrentUser();
+  const user = await requireCurrentUser();
   const clientConnectors = connectorRegistry.map(({ testConnection, refreshToken, ...connector }) => connector);
+  const connections = (await listConnectionsForUser(user.id)).map(toSafeConnection);
 
   return (
     <AppShell>
@@ -20,6 +23,7 @@ export default async function ConnectorsPage() {
         </p>
       </section>
       <NewConnectionForm connectors={clientConnectors} />
+      <SavedConnectionsList connectors={clientConnectors} initialConnections={connections} />
       <ConnectionSetupAssistant connectors={clientConnectors} />
       <section className="grid two">
         {connectorRegistry.map((connector) => (

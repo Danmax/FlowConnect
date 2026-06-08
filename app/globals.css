@@ -243,6 +243,77 @@ label {
   margin: 6px 0;
 }
 
+.saved-connections,
+.connection-card,
+.api-mapping-result {
+  display: grid;
+  gap: 14px;
+}
+
+.connection-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toggle-label {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: #1e3a8a;
+  display: inline-flex;
+  font-weight: 800;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 12px;
+}
+
+.toggle-label input {
+  min-height: 18px;
+  width: 18px;
+}
+
+.health-healthy {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.health-unhealthy,
+.status-error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.health-unknown {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.api-mapping-result {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.api-mapping-result article {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.api-mapping-result pre {
+  background: #0f172a;
+  border-radius: 8px;
+  color: #e2e8f0;
+  margin: 0;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre-wrap;
+}
+
 .form-error {
   color: #b91c1c;
   font-weight: 800;
@@ -349,6 +420,7 @@ label {
 
 .status-draft,
 .status-inactive,
+.status-disabled,
 .run-cancelled {
   background: #f1f5f9;
   color: #334155;
@@ -360,6 +432,7 @@ label {
 }
 
 .status-active,
+.status-enabled,
 .run-complete {
   background: #dcfce7;
   color: #166534;

@@ -118,6 +118,21 @@ export const updateConnectionHealth = async (
   );
 };
 
+export const updateConnectionStatusForUser = async (
+  connectionId: number,
+  userId: number,
+  status: StoredConnection["status"]
+) => {
+  const [result] = await db().execute<ResultSetHeader>(
+    `UPDATE connections
+     SET status = :status
+     WHERE id = :connectionId AND user_id = :userId`,
+    { connectionId, userId, status }
+  );
+
+  return result.affectedRows > 0;
+};
+
 export const toSafeConnection = (connection: StoredConnection) => ({
   id: connection.id,
   userId: connection.userId,
