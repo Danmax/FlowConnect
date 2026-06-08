@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/AppShell";
+import { ConnectionSetupAssistant } from "@/components/ConnectionSetupAssistant";
 import { ConnectorCard } from "@/components/ConnectorCard";
 import { NewConnectionForm } from "@/components/NewConnectionForm";
 import { connectorRegistry } from "@/lib/connector-sdk";
@@ -19,6 +20,7 @@ export default async function ConnectorsPage() {
         </p>
       </section>
       <NewConnectionForm connectors={clientConnectors} />
+      <ConnectionSetupAssistant connectors={clientConnectors} />
       <section className="grid two">
         {connectorRegistry.map((connector) => (
           <ConnectorCard connector={connector} key={connector.id} />

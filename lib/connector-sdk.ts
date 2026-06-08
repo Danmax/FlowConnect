@@ -163,13 +163,21 @@ export const connectorRegistry: ConnectorDefinition[] = [
     authType: "bearer_token",
     authDocsUrl: "https://www.servicenow.com/docs/bundle/xanadu-platform-security/page/administer/security/concept/oauth-setup.html",
     apiDocsUrl: "https://www.servicenow.com/docs/bundle/xanadu-api-reference/page/integrate/inbound-rest/concept/c_TableAPI.html",
-    requiredScopes: ["incident.write", "case.write", "user.read"],
+    requiredScopes: ["incident.write", "case.write", "user.read", "table.write", "flow.execute"],
     credentialFields: [
       { key: "instanceUrl", label: "Instance URL", type: "url", required: true, placeholder: "https://example.service-now.com" },
       { key: "accessToken", label: "Access token", type: "password", required: true }
     ],
     availableTriggers: ["Incident Created", "Incident Updated", "Case Updated"],
-    availableActions: ["Create Incident", "Update Incident", "Create Case", "Add Work Note"],
+    availableActions: [
+      "Create Incident",
+      "Update Incident",
+      "Create Case",
+      "Add Work Note",
+      "Create Dynamic Table Record",
+      "Update Dynamic Table Record",
+      "Execute Flow Designer Action"
+    ],
     actionCatalog: [
       {
         key: "createIncident",
@@ -178,6 +186,30 @@ export const connectorRegistry: ConnectorDefinition[] = [
         endpoint: "/api/now/table/incident",
         docsUrl: "https://www.servicenow.com/docs/r/qnibzcgwHHd8lRjqRYIU3g/lJdwmUq4r7Mm~Pr9vcskdA",
         requiredScopes: ["incident.write"]
+      },
+      {
+        key: "createDynamicTableRecord",
+        label: "Create dynamic table record",
+        method: "POST",
+        endpoint: "/api/now/table/{tableName}",
+        docsUrl: "https://www.servicenow.com/docs/bundle/xanadu-api-reference/page/integrate/inbound-rest/concept/c_TableAPI.html",
+        requiredScopes: ["table.write"]
+      },
+      {
+        key: "updateDynamicTableRecord",
+        label: "Update dynamic table record",
+        method: "PATCH",
+        endpoint: "/api/now/table/{tableName}/{sysId}",
+        docsUrl: "https://www.servicenow.com/docs/bundle/xanadu-api-reference/page/integrate/inbound-rest/concept/c_TableAPI.html",
+        requiredScopes: ["table.write"]
+      },
+      {
+        key: "executeFlowDesignerAction",
+        label: "Execute Flow Designer action",
+        method: "POST",
+        endpoint: "/api/now/v1/action/{actionName}",
+        docsUrl: "https://www.servicenow.com/docs/bundle/xanadu-api-reference/page/integrate/inbound-rest/concept/c_API.html",
+        requiredScopes: ["flow.execute"]
       }
     ],
     rateLimitRules: [{ window: "minute", maxRequests: 120, strategy: "queue" }],
@@ -395,6 +427,66 @@ export const connectorRegistry: ConnectorDefinition[] = [
           })
         : Promise.resolve({ ok: false, message: "Instagram requires an access token.", checkedAt: now() }),
     refreshToken: (context) => refreshOAuthToken({ appName: "Instagram", id: "instagram" }, context)
+  },
+  {
+    id: "custom-app",
+    appName: "Custom App",
+    appIcon: "API",
+    brandColor: "#475569",
+    category: "Generic",
+    authType: "bearer_token",
+    authDocsUrl: "https://swagger.io/specification/",
+    apiDocsUrl: "https://swagger.io/specification/",
+    requiredScopes: ["api.read", "api.write"],
+    credentialFields: [
+      { key: "baseUrl", label: "Base API URL", type: "url", required: true, placeholder: "https://api.example.com" },
+      { key: "accessToken", label: "Bearer token", type: "password", required: true },
+      { key: "testPath", label: "Test path", type: "text", required: false, placeholder: "/health" }
+    ],
+    availableTriggers: ["Webhook Received", "Polling Event", "Async API Request"],
+    availableActions: ["Call REST Endpoint", "Create Record", "Update Record", "Run Operation"],
+    actionCatalog: [
+      {
+        key: "callRestEndpoint",
+        label: "Call REST endpoint",
+        method: "POST",
+        endpoint: "{baseUrl}/{path}",
+        docsUrl: "https://swagger.io/specification/",
+        requiredScopes: ["api.write"]
+      },
+      {
+        key: "getResource",
+        label: "Get resource",
+        method: "GET",
+        endpoint: "{baseUrl}/{resourcePath}",
+        docsUrl: "https://swagger.io/specification/",
+        requiredScopes: ["api.read"]
+      }
+    ],
+    rateLimitRules: [{ window: "minute", maxRequests: 120, strategy: "queue" }],
+    errorHandlingRules: {
+      retryableStatuses: [408, 429, 500, 502, 503, 504],
+      maxRetries: 3,
+      backoff: "exponential",
+      fallbackAction: "mark_failed"
+    },
+    testConnection: (context) => {
+      const baseUrl = normalizeInstanceUrl(context.credentials.baseUrl);
+      const testPath = context.credentials.testPath?.startsWith("/") ? context.credentials.testPath : `/${context.credentials.testPath ?? ""}`;
+
+      if (!baseUrl || !context.credentials.accessToken) {
+        return Promise.resolve({ ok: false, message: "Custom App requires base API URL and bearer token.", checkedAt: now() });
+      }
+
+      return httpConnectionTest("Custom App", `${baseUrl}${testPath === "/" ? "" : testPath}`, {
+        headers: bearerHeaders(context.credentials.accessToken)
+      });
+    },
+    refreshToken: (context) =>
+      Promise.resolve({
+        accessToken: context.credentials.accessToken,
+        expiresAt: undefined
+      })
   }
 ];
 
