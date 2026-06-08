@@ -85,6 +85,10 @@ export const createConnectionForUser = async ({
     throw new Error(`Missing required credentials: ${missingFields.join(", ")}.`);
   }
 
+  if (connectorId === "servicenow" && !credentials.accessToken && (!credentials.clientId || !credentials.clientSecret)) {
+    throw new Error("ServiceNow requires either an access token or OAuth Client ID and Client Secret.");
+  }
+
   const encryptedCredentials = encryptCredentials(credentials);
   const [result] = await db().execute<ResultSetHeader>(
     `INSERT INTO connections

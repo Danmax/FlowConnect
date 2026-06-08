@@ -30,17 +30,35 @@ const findConnector = (connectorId: string) =>
 const fallbackGuide = (connector: ConnectorDefinition, prompt: string): ConnectionGuide => ({
   title: `${connector.appName} connection setup guide`,
   summary: prompt || `Create a saved ${connector.appName} connection and map it into FlowConnect workflows.`,
-  userAccountSetup: [
-    `Create or confirm a ${connector.appName} user account dedicated to FlowConnect automation.`,
-    "Grant only the roles/scopes required for the workflow actions you plan to run.",
-    "Create credentials using the provider's official auth setup page, then store them in the FlowConnect connection form."
-  ],
-  connectionSteps: [
-    `Open Connectors, choose ${connector.appName}, and enter a clear display name.`,
-    `Add the required ${connector.authType.replace("_", " ")} credential values.`,
-    "Save the connection, then run the live connection test before using it in workflows.",
-    "Use the API action catalog to map request fields and data pills into workflow steps."
-  ],
+  userAccountSetup:
+    connector.id === "servicenow"
+      ? [
+          "Log in to the ServiceNow instance with admin access to Application Registry.",
+          "Navigate to System OAuth > Application Registry.",
+          "Select New, then create an OAuth API endpoint for external clients.",
+          "Submit the record, then copy the generated Client ID and Client Secret.",
+          "Grant the integration account only the table/API roles needed for the target tables and Flow Designer actions."
+        ]
+      : [
+          `Create or confirm a ${connector.appName} user account dedicated to FlowConnect automation.`,
+          "Grant only the roles/scopes required for the workflow actions you plan to run.",
+          "Create credentials using the provider's official auth setup page, then store them in the FlowConnect connection form."
+        ],
+  connectionSteps:
+    connector.id === "servicenow"
+      ? [
+          "Open Connectors, choose ServiceNow, and enter the instance URL such as https://example.service-now.com.",
+          "Use either an existing access token/personal OAuth token or enter OAuth Client ID and Client Secret.",
+          "If using client credentials, set Token URL to https://example.service-now.com/oauth_token.do or leave it blank to infer it from the instance URL.",
+          "Save the connection, then run the live connection test against /api/now/table/sys_user?sysparm_limit=1.",
+          "Use Run API Mapping to map ServiceNow table and Flow Designer actions into workflow steps."
+        ]
+      : [
+          `Open Connectors, choose ${connector.appName}, and enter a clear display name.`,
+          `Add the required ${connector.authType.replace("_", " ")} credential values.`,
+          "Save the connection, then run the live connection test before using it in workflows.",
+          "Use the API action catalog to map request fields and data pills into workflow steps."
+        ],
   requiredCredentials: connector.credentialFields.map((field) => ({
     key: field.key,
     description: field.placeholder ?? field.label,
@@ -55,7 +73,8 @@ const fallbackGuide = (connector: ConnectorDefinition, prompt: string): Connecti
     ],
     workflowOptions: [
       "For Flow Designer or Scripted REST integrations, expose a stable endpoint that can be called from a REST API workflow step.",
-      "Use a ServiceNow service account with table ACL access and only the required create/update/read permissions."
+      "Use a ServiceNow service account with table ACL access and only the required create/update/read permissions.",
+      "For external API integrations, use OAuth client credentials by posting grant_type=client_credentials, client_id, and client_secret to /oauth_token.do."
     ],
     tableApiSteps: [
       "Identify the target table and required fields in ServiceNow.",

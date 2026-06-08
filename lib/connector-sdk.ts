@@ -145,12 +145,56 @@ const refreshOAuthToken = async (connector: Pick<ConnectorDefinition, "appName" 
   };
 };
 
+const requestClientCredentialsToken = async ({
+  appName,
+  tokenUrl,
+  clientId,
+  clientSecret
+}: {
+  appName: string;
+  tokenUrl: string;
+  clientId: string;
+  clientSecret: string;
+}) => {
+  const response = await fetch(tokenUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: clientId,
+      client_secret: clientSecret
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`${appName} client credentials token request failed with ${response.status}.`);
+  }
+
+  const payload = (await response.json()) as {
+    access_token: string;
+    expires_in?: number;
+  };
+
+  return {
+    accessToken: payload.access_token,
+    expiresAt: payload.expires_in ? new Date(Date.now() + payload.expires_in * 1000).toISOString() : undefined
+  };
+};
+
 const oauthFields: CredentialField[] = [
   { key: "accessToken", label: "Access token", type: "password", required: true },
   { key: "refreshToken", label: "Refresh token", type: "password", required: false },
   { key: "clientId", label: "Client ID", type: "password", required: false },
   { key: "clientSecret", label: "Client secret", type: "password", required: false },
   { key: "tokenUrl", label: "Token URL", type: "url", required: false }
+];
+
+const serviceNowFields: CredentialField[] = [
+  { key: "instanceUrl", label: "Instance URL", type: "url", required: true, placeholder: "https://example.service-now.com" },
+  { key: "accessToken", label: "Access token or personal OAuth token", type: "password", required: false },
+  { key: "clientId", label: "OAuth Client ID", type: "password", required: false },
+  { key: "clientSecret", label: "OAuth Client Secret", type: "password", required: false },
+  { key: "tokenUrl", label: "Token URL", type: "url", required: false, placeholder: "https://example.service-now.com/oauth_token.do" }
 ];
 
 export const connectorRegistry: ConnectorDefinition[] = [
@@ -160,14 +204,11 @@ export const connectorRegistry: ConnectorDefinition[] = [
     appIcon: "SN",
     brandColor: "#81b5a1",
     category: "ITSM",
-    authType: "bearer_token",
+    authType: "oauth2",
     authDocsUrl: "https://www.servicenow.com/docs/bundle/xanadu-platform-security/page/administer/security/concept/oauth-setup.html",
     apiDocsUrl: "https://www.servicenow.com/docs/bundle/xanadu-api-reference/page/integrate/inbound-rest/concept/c_TableAPI.html",
     requiredScopes: ["incident.write", "case.write", "user.read", "table.write", "flow.execute"],
-    credentialFields: [
-      { key: "instanceUrl", label: "Instance URL", type: "url", required: true, placeholder: "https://example.service-now.com" },
-      { key: "accessToken", label: "Access token", type: "password", required: true }
-    ],
+    credentialFields: serviceNowFields,
     availableTriggers: ["Incident Created", "Incident Updated", "Case Updated"],
     availableActions: [
       "Create Incident",
@@ -219,18 +260,56 @@ export const connectorRegistry: ConnectorDefinition[] = [
       backoff: "exponential",
       fallbackAction: "send_to_dead_letter"
     },
-    testConnection: (context) => {
+    testConnection: async (context) => {
       const instanceUrl = normalizeInstanceUrl(context.credentials.instanceUrl);
+      const tokenUrl = context.credentials.tokenUrl || (instanceUrl ? `${instanceUrl}/oauth_token.do` : "");
+      let accessToken = context.credentials.accessToken;
 
-      if (!instanceUrl || !context.credentials.accessToken) {
-        return Promise.resolve({ ok: false, message: "ServiceNow requires instance URL and access token.", checkedAt: now() });
+      if (!instanceUrl) {
+        return { ok: false, message: "ServiceNow requires an instance URL.", checkedAt: now() };
+      }
+
+      if (!accessToken && context.credentials.clientId && context.credentials.clientSecret) {
+        const token = await requestClientCredentialsToken({
+          appName: "ServiceNow",
+          tokenUrl,
+          clientId: context.credentials.clientId,
+          clientSecret: context.credentials.clientSecret
+        });
+        accessToken = token.accessToken;
+      }
+
+      if (!accessToken) {
+        return {
+          ok: false,
+          message: "ServiceNow requires either an access token or OAuth Client ID and Client Secret.",
+          checkedAt: now()
+        };
       }
 
       return httpConnectionTest("ServiceNow", `${instanceUrl}/api/now/table/sys_user?sysparm_limit=1`, {
-        headers: bearerHeaders(context.credentials.accessToken)
+        headers: bearerHeaders(accessToken)
       });
     },
-    refreshToken: (context) => refreshOAuthToken({ appName: "ServiceNow", id: "servicenow" }, context)
+    refreshToken: (context) => {
+      const instanceUrl = normalizeInstanceUrl(context.credentials.instanceUrl);
+      const tokenUrl = context.credentials.tokenUrl || (instanceUrl ? `${instanceUrl}/oauth_token.do` : "");
+
+      if (context.credentials.refreshToken) {
+        return refreshOAuthToken({ appName: "ServiceNow", id: "servicenow" }, { ...context, credentials: { ...context.credentials, tokenUrl } });
+      }
+
+      if (context.credentials.clientId && context.credentials.clientSecret && tokenUrl) {
+        return requestClientCredentialsToken({
+          appName: "ServiceNow",
+          tokenUrl,
+          clientId: context.credentials.clientId,
+          clientSecret: context.credentials.clientSecret
+        });
+      }
+
+      throw new Error("ServiceNow token refresh requires refresh token or OAuth Client ID and Client Secret.");
+    }
   },
   {
     id: "github",
