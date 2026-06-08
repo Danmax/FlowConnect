@@ -2,8 +2,10 @@ import { AppShell } from "@/components/AppShell";
 import { ConnectorCard } from "@/components/ConnectorCard";
 import { NewConnectionForm } from "@/components/NewConnectionForm";
 import { connectorRegistry } from "@/lib/connector-sdk";
+import { requireCurrentUser } from "@/lib/require-auth";
 
-export default function ConnectorsPage() {
+export default async function ConnectorsPage() {
+  await requireCurrentUser();
   const clientConnectors = connectorRegistry.map(({ testConnection, refreshToken, ...connector }) => connector);
 
   return (

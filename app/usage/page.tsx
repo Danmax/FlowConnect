@@ -1,8 +1,11 @@
 import { AppShell } from "@/components/AppShell";
 import { UsageDashboard } from "@/components/UsageDashboard";
+import { requireCurrentUser } from "@/lib/require-auth";
 import { pricingPlans } from "@/lib/usage-billing";
 
-export default function UsagePage() {
+export default async function UsagePage() {
+  await requireCurrentUser();
+
   return (
     <AppShell>
       <section>

@@ -3,26 +3,10 @@ import { AppShell } from "@/components/AppShell";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { listConnectionsForUser, toSafeConnection } from "@/lib/connection-repository";
 import { connectorRegistry } from "@/lib/connector-sdk";
-import { getCurrentUser } from "@/lib/auth";
+import { requireCurrentUser } from "@/lib/require-auth";
 
 export default async function ProfilePage() {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return (
-      <AppShell>
-        <section className="panel">
-          <span className="badge">Profile</span>
-          <h1>Sign in required</h1>
-          <p className="lead">Sign in to save and test your own app connections.</p>
-          <Link className="button primary" href="/login">
-            Sign in
-          </Link>
-        </section>
-      </AppShell>
-    );
-  }
-
+  const user = await requireCurrentUser();
   const connections = (await listConnectionsForUser(user.id)).map(toSafeConnection);
 
   return (

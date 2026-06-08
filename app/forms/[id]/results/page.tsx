@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { FormResultsDashboard } from "@/components/forms/FormResultsDashboard";
-import { getCurrentUser } from "@/lib/auth";
 import { getFormResultsForUser } from "@/lib/forms-repository";
+import { requireCurrentUser } from "@/lib/require-auth";
 
 type FormResultsPageProps = {
   params: Promise<{
@@ -11,11 +11,11 @@ type FormResultsPageProps = {
 };
 
 export default async function FormResultsPage({ params }: FormResultsPageProps) {
-  const user = await getCurrentUser();
+  const user = await requireCurrentUser();
   const { id } = await params;
   const formId = Number(id);
 
-  if (!user || !Number.isInteger(formId)) {
+  if (!Number.isInteger(formId)) {
     notFound();
   }
 

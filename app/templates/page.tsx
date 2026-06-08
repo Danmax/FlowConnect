@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/AppShell";
 import { TemplateCard } from "@/components/TemplateCard";
 import { searchTemplates } from "@/lib/marketplace";
+import { requireCurrentUser } from "@/lib/require-auth";
 
 type TemplatesPageProps = {
   searchParams: Promise<{
@@ -11,6 +12,7 @@ type TemplatesPageProps = {
 };
 
 export default async function TemplatesPage({ searchParams }: TemplatesPageProps) {
+  await requireCurrentUser();
   const params = await searchParams;
   const templates = searchTemplates(params.q, params.app, params.category);
 

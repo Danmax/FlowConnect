@@ -1,5 +1,6 @@
 import { Bot, Cable, FileJson, FormInput, Gauge, ListChecks, PlayCircle, Store } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { requireCurrentUser } from "@/lib/require-auth";
 import { pricingPlans } from "@/lib/usage-billing";
 
 const features = [
@@ -13,7 +14,9 @@ const features = [
   ["Templates Marketplace", Store]
 ];
 
-export default function Home() {
+export default async function Home() {
+  await requireCurrentUser();
+
   return (
     <AppShell>
       <section className="hero">
